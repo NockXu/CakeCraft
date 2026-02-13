@@ -4,15 +4,13 @@ class Screen:
     def __init__(self):
         self.width = 1280
         self.height = 1024
+        self.icon = pygame.image.load('./assets/icon/icon.png')
         self.screen = pygame.display.set_mode((self.width, self.height), pygame.FULLSCREEN | pygame.SCALED)
+        pygame.display.set_icon(self.icon)
         pygame.display.set_caption("CakeCraft")
 
 if __name__ == "__main__":
     pygame.init()
-    screen = Screen()
-
-    icon: str = pygame.image.load('./assets/icon/icon.png')
-    pygame.display.set_icon(icon)
     
     running = True
     while running:
