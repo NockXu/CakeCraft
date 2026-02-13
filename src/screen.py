@@ -10,6 +10,9 @@ class Screen:
 if __name__ == "__main__":
     pygame.init()
     screen = Screen()
+
+    icon: str = pygame.image.load('./assets/icon/icon.png')
+    pygame.display.set_icon(icon)
     
     running = True
     while running:
