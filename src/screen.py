@@ -1,3 +1,4 @@
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH, ICON_PATH
 import pygame
 
 class Screen:
@@ -10,9 +11,10 @@ class Screen:
     
     def __init__(self):
         if not hasattr(self, 'initialized'):
-            self.width = 1280
-            self.height = 1024
+            self.width = SCREEN_WIDTH
+            self.height = SCREEN_HEIGHT
             self.screen = pygame.display.set_mode((self.width, self.height), pygame.FULLSCREEN | pygame.SCALED)
+            pygame.display.set_icon(self.icon)
             pygame.display.set_caption("CakeCraft")
             self.initialized = True
 
