@@ -11,6 +11,7 @@ class Screen:
 
 if __name__ == "__main__":
     pygame.init()
+    screen = Screen()
     
     running = True
     while running:
