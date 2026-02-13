@@ -1,11 +1,20 @@
 import pygame
 
 class Screen:
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(Screen, cls).__new__(cls)
+        return cls._instance
+    
     def __init__(self):
-        self.width = 1280
-        self.height = 1024
-        self.screen = pygame.display.set_mode((self.width, self.height), pygame.FULLSCREEN | pygame.SCALED)
-        pygame.display.set_caption("CakeCraft")
+        if not hasattr(self, 'initialized'):
+            self.width = 1280
+            self.height = 1024
+            self.screen = pygame.display.set_mode((self.width, self.height), pygame.FULLSCREEN | pygame.SCALED)
+            pygame.display.set_caption("CakeCraft")
+            self.initialized = True
 
 if __name__ == "__main__":
     pygame.init()
