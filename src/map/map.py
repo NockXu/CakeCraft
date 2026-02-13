@@ -3,6 +3,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from screen import Screen
+from constants import MAP_BG_COLOR, MAP_SEPARATOR_COLOR, MAP_SEPARATOR_WIDTH
 
 class Map:
     def __init__(self):
@@ -19,11 +20,11 @@ class Map:
                     self.running = False
 
     def draw(self):
-        self.screen.fill((255, 255, 255))
+        self.screen.fill(MAP_BG_COLOR)
 
         # SEPARATOR
         center_x = self.screen.get_width() // 2
-        pygame.draw.line(self.screen, (0, 0, 0), (center_x, 0), (center_x, self.screen.get_height()), 4)
+        pygame.draw.line(self.screen, MAP_SEPARATOR_COLOR, (center_x, 0), (center_x, self.screen.get_height()), MAP_SEPARATOR_WIDTH)
 
         pygame.display.flip()
 
