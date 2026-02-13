@@ -6,22 +6,28 @@ from screen import Screen
 
 class Map:
     def __init__(self):
-        self.screen : pygame.Surface = Screen().screen
+        self.screen: pygame.Surface = Screen().screen
+        self.running = True
 
-if __name__ == "__main__":
-    pygame.init()
-    map = Map()
-    
-    running = True
-    while running:
+    def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                pygame.quit()
+                sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    running = False
-        
-        map.screen.fill((255, 255, 255))
+                    self.running = False
+
+    def draw(self):
+        self.screen.fill((255, 255, 255))
+
+        # SEPARATOR
+        center_x = self.screen.get_width() // 2
+        pygame.draw.line(self.screen, (0, 0, 0), (center_x, 0), (center_x, self.screen.get_height()), 4)
+
         pygame.display.flip()
-    
-    pygame.quit()
+
+    def run(self):
+        while self.running:
+            self.handle_events()
+            self.draw()
