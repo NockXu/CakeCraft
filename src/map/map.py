@@ -6,7 +6,7 @@ from screen import Screen
 
 class Map:
     def __init__(self):
-        self.screen : pygame.Surface = screen.Screen().screen
+        self.screen : pygame.Surface = Screen().screen
 
 if __name__ == "__main__":
     pygame.init()
