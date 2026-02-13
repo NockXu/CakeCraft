@@ -1,10 +1,11 @@
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH, ICON_PATH
 import pygame
 
 class Screen:
     def __init__(self):
-        self.width = 1280
-        self.height = 1024
-        self.icon = pygame.image.load('./assets/icon/icon.png')
+        self.width = SCREEN_WIDTH
+        self.height = SCREEN_HEIGHT
+        self.icon = pygame.image.load(ICON_PATH)
         self.screen = pygame.display.set_mode((self.width, self.height), pygame.FULLSCREEN | pygame.SCALED)
         pygame.display.set_icon(self.icon)
         pygame.display.set_caption("CakeCraft")
