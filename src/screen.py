@@ -13,6 +13,7 @@ class Screen:
         if not hasattr(self, 'initialized'):
             self.width = SCREEN_WIDTH
             self.height = SCREEN_HEIGHT
+            self.icon = pygame.image.load(ICON_PATH)
             self.screen = pygame.display.set_mode((self.width, self.height), pygame.FULLSCREEN | pygame.SCALED)
             pygame.display.set_icon(self.icon)
             pygame.display.set_caption("CakeCraft")
