@@ -26,3 +26,7 @@ MENU_BTN_BORDER_RADIUS = 32
 MAP_BG_COLOR         = (255, 255, 255)
 MAP_SEPARATOR_COLOR  = (0, 0, 0)
 MAP_SEPARATOR_WIDTH  = 4
+
+MAP_KITCHEN_RATIO        = 0.55   # proportion of screen height for kitchen
+MAP_INGREDIENT_BOX_RATIO = 0.70   # proportion of half-width for ingredient box
+MAP_CUSTOMER_GAP_RATIO   = 0.35   # proportion of shop height left as gap for customers
