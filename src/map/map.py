@@ -3,7 +3,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from screen import Screen
-from constants import MAP_BG_COLOR, MAP_SEPARATOR_COLOR, MAP_SEPARATOR_WIDTH, MAP_KITCHEN_RATIO, PLAYER_SPEED, FPS
+from constants import MAP_BG_COLOR, MAP_SEPARATOR_COLOR, MAP_SEPARATOR_WIDTH, MAP_KITCHEN_RATIO, PLAYER_SPEED, FPS, TIME_FAST_FORWARD_SCALE
 from player_zone import PlayerZone
 from enums import Side
 
@@ -66,8 +66,18 @@ class Map:
 
         pygame.display.flip()
 
+    def update(self, dt: float):
+        self.zone_left.update(dt)
+        self.zone_right.update(dt)
+
+    def _time_scale(self) -> float:
+        """Returns a time multiplier — hold TAB to fast-forward."""
+        keys = pygame.key.get_pressed()
+        return TIME_FAST_FORWARD_SCALE if keys[pygame.K_TAB] else 1.0
+
     def run(self):
         while self.running:
+            dt = self.clock.tick(FPS) / 1000.0 * self._time_scale()
             self.handle_events()
+            self.update(dt)
             self.draw()
-            self.clock.tick(FPS)

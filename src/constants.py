@@ -34,6 +34,8 @@ MAP_SEPARATOR_WIDTH  = 4
 MAP_KITCHEN_RATIO        = 0.55   # proportion of screen height for kitchen
 MAP_INGREDIENT_BOX_RATIO = 0.70   # proportion of half-width for ingredient box
 MAP_CUSTOMER_GAP_RATIO   = 0.35   # proportion of shop height left as gap for customers
+MAP_COMPTOIR_HEIGHT      = 20     # height of the counter drawn at the top of the path
+MAP_COMPTOIR_COLOR       = (180, 120, 60)  # wood-like brown
 
 # PLAYER Constants
 # ----------------
@@ -42,3 +44,16 @@ PLAYER_SPEED = 5
 PLAYER_1_COLOR = (220, 50, 50)   # red
 PLAYER_2_COLOR = (50, 100, 220)  # blue
 FPS = 60
+TIME_FAST_FORWARD_SCALE = 10   # time multiplier when fast-forward key is held
+
+# CUSTOMER Constants
+# ------------------
+CUSTOMER_SIZE              = 20
+CUSTOMER_SPEED             = 80    # pixels per second
+CUSTOMER_COLOR             = (100, 180, 100)   # green placeholder
+CUSTOMER_ANGRY_COLOR       = (200, 80, 80)     # red when leaving angry
+CUSTOMER_PATIENCE_BAR_W    = 60
+CUSTOMER_PATIENCE_BAR_H    = 8
+CUSTOMER_LABEL_FONT_SIZE   = 22
+CUSTOMER_SPAWN_INTERVAL    = 8.0   # seconds between spawns
+CUSTOMER_MAX_COUNT         = 3     # max simultaneous customers per zone
