@@ -20,6 +20,18 @@ class eventHandler:
         for thing in things:
             self.remove_thing(thing)
     
-    def handle_events(self, keys):
+    def handle_events(self):
         for thing in self._thingToHandle:
-            thing.handle_events(keys)
+            thing.handle_events()
+
+    def handle_keydown(self, key):
+        """Gère les événements de touche pressée (pour actions ponctuelles)"""
+        for thing in self._thingToHandle:
+            if hasattr(thing, "handle_keydown"):
+                thing.handle_keydown(key)
+
+    def handle_movement(self, keys):
+        """Gère les touches de mouvement (maintenues en continu)"""
+        for thing in self._thingToHandle:
+            if hasattr(thing, "handle_movement"):
+                thing.handle_movement(keys)

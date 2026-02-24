@@ -11,8 +11,8 @@ class Game:
         pygame.init()
         self.map = Map()
         self.eventHandler = eventHandler()
-        self.eventHandler.add_thing(self.map.zone_left.player)
-        self.eventHandler.add_thing(self.map.zone_right.player)
+        self.eventHandler.add_thing(self.map.zone_left)
+        self.eventHandler.add_thing(self.map.zone_right)
         self.clock = pygame.time.Clock()
         self.running = True
     
@@ -25,16 +25,23 @@ class Game:
         while self.running:
             dt = self.clock.tick(FPS) / 1000.0 * self._time_scale()
             
-            # Gérer les événements de base (QUIT, ESCAPE)
+            # Gérer les événements de base (QUIT, ESCAPE) et les touches spécifiques
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.running = False
+                    else:
+                        # Envoyer l'événement de touche spécifique aux interactables
+                        self.eventHandler.handle_keydown(event.key)
             
+            # Pour le mouvement continu, on garde les touches pressées
             keys = pygame.key.get_pressed()
-            self.eventHandler.handle_events(keys)
+            self.eventHandler.handle_movement(keys)
+
+            self.eventHandler.handle_events()
+
             self.map.update(dt)
             self.map.draw()
             

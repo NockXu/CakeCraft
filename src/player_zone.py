@@ -15,6 +15,10 @@ from entity.player import Player
 from entity.customer import Customer
 from position import Position
 from recipe_catalog import RecipeCatalog
+from interactable.creator import Creator
+from interactable.deletor import Deletor
+from interactable.holder import Holder
+from entity.item.test import Test
 
 
 _ORDER_FONT_TITLE = None
@@ -87,6 +91,33 @@ class PlayerZone:
         # Customer management
         self._customers:   list[Customer] = []
         self._spawn_timer: float          = CUSTOMER_SPAWN_INTERVAL
+        
+        # Interactables management
+        self.interactables = []
+        self._setup_interactables()
+        
+        # Give interactables list to player
+        self.player.available_interactables = self.interactables
+    
+    def _setup_interactables(self):
+        """Configure les objets interactables dans la zone"""
+        # Créer une machine à gâteaux dans la cuisine
+        creator_x = self.kitchen_rect.centerx
+        creator_y = self.kitchen_rect.centery - 50
+        creator = Creator(Position(creator_x, creator_y), 50, "Machine à gâteaux", pygame.K_f, Test(), self.player)
+        self.interactables.append(creator)
+
+        # Créer un deletor (poubelle) à côté de la machine
+        deletor_x = creator_x + 80
+        deletor_y = creator_y
+        deletor = Deletor(Position(deletor_x, deletor_y), 50, "Poubelle (supprimer)", pygame.K_f, self.player)
+        self.interactables.append(deletor)
+
+        # Créer un holder (support) en bas de la cuisine
+        holder_x = self.kitchen_rect.centerx
+        holder_y = self.kitchen_rect.bottom - 80
+        holder = Holder(Position(holder_x, holder_y), 50, "Support (stocker)", pygame.K_f, self.player)
+        self.interactables.append(holder)
 
     # ------------------------------------------------------------------
     # Update
@@ -156,6 +187,10 @@ class PlayerZone:
         waiting = next((c for c in self._customers if c.is_waiting), None)
         self._draw_order_panel(waiting)
 
+        # Interactables
+        for interactable in self.interactables:
+            interactable.draw(self.screen)
+
         # Customers and player
         for customer in self._customers:
             customer.draw(self.screen)
@@ -203,3 +238,20 @@ class PlayerZone:
         pygame.draw.rect(self.screen, bar_color,
                          pygame.Rect(bar_rect.left, bar_rect.top,
                                      int(bar_rect.width * ratio), bar_rect.height))
+
+    def handle_keydown(self, key):
+        """Gère les touches pressées pour les interactables"""
+        for interactable in self.interactables:
+            if hasattr(interactable, "handle_keydown"):
+                interactable.handle_keydown(key)
+
+    def handle_movement(self, keys: list[bool]):
+        """Gère les touches de mouvement pour le joueur"""
+        self.player.handle_movement(keys)
+
+    def handle_events(self):
+        for interactable in self.interactables:
+            if hasattr(interactable, "handle_events") and callable(getattr(interactable, "handle_events")):
+                interactable.handle_events()
+
+        self.player.handle_events()
