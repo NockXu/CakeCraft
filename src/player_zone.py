@@ -8,7 +8,8 @@ from constants import (
     MAP_INGREDIENT_BOX_RATIO, MAP_CUSTOMER_GAP_RATIO,
     MAP_COMPTOIR_HEIGHT, MAP_COMPTOIR_COLOR,
     PLAYER_SIZE, PLAYER_1_COLOR, PLAYER_2_COLOR,
-    CUSTOMER_SIZE, CUSTOMER_SPAWN_INTERVAL, CUSTOMER_MAX_COUNT
+    CUSTOMER_SIZE, CUSTOMER_SPAWN_INTERVAL, CUSTOMER_MAX_COUNT,
+    PLAYER_1_KEYS, PLAYER_2_KEYS
 )
 from entity.player import Player
 from entity.customer import Customer
@@ -57,8 +58,10 @@ class PlayerZone:
         # For RIGHT: path is to the LEFT of the ingredient box
         path_w = half_w - box_w
         if side == Side.LEFT:
+            controls = PLAYER_1_KEYS
             path_x = x_offset + box_w
         else:
+            controls = PLAYER_2_KEYS
             path_x = x_offset
         self._path_cx = path_x + path_w // 2
 
@@ -78,7 +81,7 @@ class PlayerZone:
         color = PLAYER_1_COLOR if side == Side.LEFT else PLAYER_2_COLOR
         self.player = Player(
             Position(self.kitchen_rect.centerx, self.kitchen_rect.centery),
-            PLAYER_SIZE, color, self.kitchen_rect
+            PLAYER_SIZE, color, self.kitchen_rect, controls
         )
 
         # Customer management

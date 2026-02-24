@@ -1,3 +1,5 @@
+import pygame
+
 # SCREEN Constants
 # -----------------
 SCREEN_WIDTH = 1280
@@ -45,6 +47,9 @@ PLAYER_1_COLOR = (220, 50, 50)   # red
 PLAYER_2_COLOR = (50, 100, 220)  # blue
 FPS = 60
 TIME_FAST_FORWARD_SCALE = 10   # time multiplier when fast-forward key is held
+# PLAYER controls
+PLAYER_1_KEYS = {"up": pygame.K_z, "down": pygame.K_s, "left": pygame.K_q, "right": pygame.K_d}
+PLAYER_2_KEYS = {"up": pygame.K_UP, "down": pygame.K_DOWN, "left": pygame.K_LEFT, "right": pygame.K_RIGHT}
 
 # CUSTOMER Constants
 # ------------------
