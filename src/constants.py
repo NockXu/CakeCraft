@@ -45,6 +45,10 @@ PLAYER_SIZE  = 30
 PLAYER_SPEED = 5
 PLAYER_1_COLOR = (220, 50, 50)   # red
 PLAYER_2_COLOR = (50, 100, 220)  # blue
+
+PLAYER_SPRITE_PATH  = './assets/sprites/player.png'
+PLAYER_SPRITE_SCALE = 56    # rendered height in pixels
+PLAYER_ANIM_FPS     = 8     # walk cycle speed (frames per second)
 FPS = 60
 TIME_FAST_FORWARD_SCALE = 10   # time multiplier when fast-forward key is held
 # PLAYER controls
