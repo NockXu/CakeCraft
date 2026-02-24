@@ -5,8 +5,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from screen import Screen
 from constants import (
     MENU_BG_COLOR, MENU_TITLE_COLOR, MENU_TITLE_FONT_SIZE, MENU_TITLE_Y_OFFSET,
-    MENU_BTN_COLOR, MENU_BTN_TEXT_COLOR, MENU_BTN_FONT_SIZE,
-    MENU_BTN_WIDTH, MENU_BTN_HEIGHT, MENU_BTN_BORDER_RADIUS
+    MENU_BTN_COLOR, MENU_BTN_HOVER_COLOR, MENU_BTN_TEXT_COLOR, MENU_BTN_SHADOW_COLOR,
+    MENU_BTN_FONT_SIZE, MENU_BTN_WIDTH, MENU_BTN_HEIGHT,
+    MENU_BTN_BORDER_RADIUS, MENU_BTN_SHADOW_OFFSET, MENU_BTN_SPACING
 )
 from enums import MenuButton
 
@@ -15,7 +16,7 @@ class Menu:
         self.screen: pygame.Surface = Screen().screen
         self.running = True
         self.next_screen: MenuButton | None = None
-        self.buttons: dict[str, pygame.Rect] = {}
+        self.buttons: dict[MenuButton, pygame.Rect] = {}
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -42,12 +43,23 @@ class Menu:
                         elif spec == MenuButton.QUITTER:
                             pygame.quit()
                             sys.exit()
-                            
 
     def draw_button(self, spec: MenuButton, x: int, y: int, width: int, height: int):
         rect = pygame.Rect(x, y, width, height)
         self.buttons[spec] = rect
-        pygame.draw.rect(self.screen, MENU_BTN_COLOR, rect, border_radius=MENU_BTN_BORDER_RADIUS)
+
+        mouse_pos = pygame.mouse.get_pos()
+        is_hovered = rect.collidepoint(mouse_pos)
+
+        # Shadow
+        shadow_rect = rect.move(MENU_BTN_SHADOW_OFFSET, MENU_BTN_SHADOW_OFFSET)
+        pygame.draw.rect(self.screen, MENU_BTN_SHADOW_COLOR, shadow_rect, border_radius=MENU_BTN_BORDER_RADIUS)
+
+        # Button (color changes on hover)
+        color = MENU_BTN_HOVER_COLOR if is_hovered else MENU_BTN_COLOR
+        pygame.draw.rect(self.screen, color, rect, border_radius=MENU_BTN_BORDER_RADIUS)
+
+        # Label
         font = pygame.font.SysFont(None, MENU_BTN_FONT_SIZE)
         label = font.render(spec.value, True, MENU_BTN_TEXT_COLOR)
         self.screen.blit(label, label.get_rect(center=rect.center))
@@ -56,20 +68,19 @@ class Menu:
         self.screen.fill(MENU_BG_COLOR)
 
         # TITLE
-        self.title_width_pos = self.screen.get_width() // 2
-        self.title_height_pos = self.screen.get_height() // 2 - MENU_TITLE_Y_OFFSET
+        center_x = self.screen.get_width() // 2
+        title_y = self.screen.get_height() // 2 - MENU_TITLE_Y_OFFSET
 
         font_title = pygame.font.SysFont(None, MENU_TITLE_FONT_SIZE)
-
         title = font_title.render("CakeCraft", True, MENU_TITLE_COLOR)
-
-        self.screen.blit(title, title.get_rect(center=(self.title_width_pos, self.title_height_pos)))
+        self.screen.blit(title, title.get_rect(center=(center_x, title_y)))
 
         # BUTTONS
-        btn_x = self.screen.get_width() // 2 - MENU_BTN_WIDTH // 2
-        self.draw_button(MenuButton.JOUER, btn_x, 400, MENU_BTN_WIDTH, MENU_BTN_HEIGHT)
-        self.draw_button(MenuButton.SCORE, btn_x, 540, MENU_BTN_WIDTH, MENU_BTN_HEIGHT)
-        self.draw_button(MenuButton.QUITTER, btn_x, 680, MENU_BTN_WIDTH, MENU_BTN_HEIGHT)
+        btn_x = center_x - MENU_BTN_WIDTH // 2
+        first_btn_y = self.screen.get_height() // 2 - 20
+        self.draw_button(MenuButton.JOUER, btn_x, first_btn_y, MENU_BTN_WIDTH, MENU_BTN_HEIGHT)
+        self.draw_button(MenuButton.SCORE, btn_x, first_btn_y + MENU_BTN_SPACING, MENU_BTN_WIDTH, MENU_BTN_HEIGHT)
+        self.draw_button(MenuButton.QUITTER, btn_x, first_btn_y + MENU_BTN_SPACING * 2, MENU_BTN_WIDTH, MENU_BTN_HEIGHT)
 
         pygame.display.flip()
 

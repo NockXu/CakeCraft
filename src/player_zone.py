@@ -3,7 +3,13 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from enums import Side
-from constants import MAP_SEPARATOR_COLOR, MAP_SEPARATOR_WIDTH, MAP_KITCHEN_RATIO, MAP_INGREDIENT_BOX_RATIO, MAP_CUSTOMER_GAP_RATIO
+from constants import (
+    MAP_SEPARATOR_COLOR, MAP_SEPARATOR_WIDTH, MAP_KITCHEN_RATIO,
+    MAP_INGREDIENT_BOX_RATIO, MAP_CUSTOMER_GAP_RATIO,
+    PLAYER_SIZE, PLAYER_1_COLOR, PLAYER_2_COLOR
+)
+from entity.player import Player
+from position import Position
 
 
 class PlayerZone:
@@ -28,12 +34,19 @@ class PlayerZone:
         # Gap at the top of shop area for customers to pass
         gap_h = int(shop_h * MAP_CUSTOMER_GAP_RATIO)
 
-        # Ingredient box: bottom-RIGHT for LEFT side, bottom-LEFT for RIGHT side (near center)
+        # Ingredient box
         box_w = int(half_w * MAP_INGREDIENT_BOX_RATIO)
         box_x = x_offset if side == Side.LEFT else x_offset + half_w - box_w
         box_y = shop_y + gap_h
         box_h = shop_h - gap_h
         self.ingredient_box_rect = pygame.Rect(box_x, box_y, box_w, box_h)
 
+        # Player — spawns at center of kitchen, clamped to kitchen_rect
+        color = PLAYER_1_COLOR if side == Side.LEFT else PLAYER_2_COLOR
+        spawn_x = self.kitchen_rect.centerx
+        spawn_y = self.kitchen_rect.centery
+        self.player = Player(Position(spawn_x, spawn_y), PLAYER_SIZE, color, self.kitchen_rect)
+
     def draw(self):
         pygame.draw.rect(self.screen, MAP_SEPARATOR_COLOR, self.ingredient_box_rect, MAP_SEPARATOR_WIDTH)
+        self.player.draw(self.screen)
