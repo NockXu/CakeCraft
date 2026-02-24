@@ -99,6 +99,7 @@ class PlayerZone:
             self._spawn_timer = CUSTOMER_SPAWN_INTERVAL
 
         self._update_queue_positions()
+        self.player.update(dt)
 
         for customer in self._customers:
             customer.update(dt)
