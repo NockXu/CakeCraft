@@ -49,6 +49,9 @@ PLAYER_2_COLOR = (50, 100, 220)  # blue
 PLAYER_SPRITE_PATH  = './assets/sprites/player.png'
 PLAYER_SPRITE_SCALE = 56    # rendered height in pixels
 PLAYER_ANIM_FPS     = 8     # walk cycle speed (frames per second)
+
+FONT_TITLE_PATH = './assets/fonts/Pacifico-Regular.ttf'
+FONT_BODY_PATH  = './assets/fonts/Nunito-Regular.ttf'
 FPS = 60
 TIME_FAST_FORWARD_SCALE = 10   # time multiplier when fast-forward key is held
 # PLAYER controls
