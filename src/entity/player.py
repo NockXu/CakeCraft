@@ -18,6 +18,15 @@ _DIR_UP    = 3   # back to camera
 _COLS = 3   # frames per row
 _ROWS = 4   # directions
 
+# Sprite sheet source dimensions — used to pre-compute collision box size
+_SHEET_W = 64
+_SHEET_H = 128
+_frame_w  = _SHEET_W // _COLS                                     # = 21
+_frame_h  = _SHEET_H // _ROWS                                     # = 32
+# Collision box matches the rendered sprite dimensions exactly
+SPRITE_W = max(1, int(_frame_w * PLAYER_SPRITE_SCALE / _frame_h) - 2)  # = 34
+SPRITE_H = PLAYER_SPRITE_SCALE                                           # = 56
+
 # Module-level cache — sprite loaded once, shared by all Player instances
 _frames: list[list[pygame.Surface]] = []   # [direction][frame_index]
 
@@ -58,7 +67,8 @@ class Player(Entity):
         self.color    = color
         self.boundary = boundary
         self.controls = controls
-        self.collision_size = size + 10  # Zone de collision plus grande que le joueur
+        self.collision_w = SPRITE_W   # matches rendered sprite width
+        self.collision_h = SPRITE_H   # matches rendered sprite height
         self.available_interactables : list[Interactable] = []
         self.current_item = None  # Item actuellement porté par le joueur
 
@@ -75,9 +85,10 @@ class Player(Entity):
             new_y = self.position.y + dy
             
             # Appliquer les limites
-            half = self.size // 2
-            new_x = max(self.boundary.left + half, min(new_x, self.boundary.right - half))
-            new_y = max(self.boundary.top + half, min(new_y, self.boundary.bottom - half))
+            half_w = self.collision_w // 2
+            half_h = self.collision_h // 2
+            new_x = max(self.boundary.left + half_w, min(new_x, self.boundary.right  - half_w))
+            new_y = max(self.boundary.top  + half_h, min(new_y, self.boundary.bottom - half_h))
             
             # Calculer le mouvement final et l'appliquer
             final_dx = new_x - self.position.x
@@ -117,12 +128,12 @@ class Player(Entity):
 
     def draw(self, screen: pygame.Surface):
         # Dessiner la zone de collision (transparente bleue)
-        collision_surface = pygame.Surface((self.collision_size, self.collision_size))
+        collision_surface = pygame.Surface((self.collision_w, self.collision_h))
         collision_surface.set_alpha(30)
         collision_surface.fill((0, 100, 255))
-        screen.blit(collision_surface, 
-                   (self.position.x - self.collision_size//2, 
-                    self.position.y - self.collision_size//2))
+        screen.blit(collision_surface,
+                   (self.position.x - self.collision_w // 2,
+                    self.position.y - self.collision_h // 2))
 
         _load_sprites()
 
@@ -166,12 +177,11 @@ class Player(Entity):
     
     def get_collision_rect(self):
         """Retourne le rectangle de collision du joueur"""
-        half_size = self.collision_size // 2
         return pygame.Rect(
-            self.position.x - half_size,
-            self.position.y - half_size,
-            self.collision_size,
-            self.collision_size
+            self.position.x - self.collision_w // 2,
+            self.position.y - self.collision_h // 2,
+            self.collision_w,
+            self.collision_h
         )
     
     def check_collision_with_interactables(self) -> Interactable | None:

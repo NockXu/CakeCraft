@@ -9,14 +9,13 @@ from constants import (
     MAP_INGREDIENT_BOX_RATIO, MAP_CUSTOMER_GAP_RATIO,
     MAP_COMPTOIR_HEIGHT, MAP_COMPTOIR_COLOR,
     PLAYER_SIZE, PLAYER_1_COLOR, PLAYER_2_COLOR,
-    CUSTOMER_SIZE, CUSTOMER_SPAWN_INTERVAL, CUSTOMER_MAX_COUNT,
+    CUSTOMER_SIZE, CUSTOMER_MAX_COUNT,
     PLAYER_1_KEYS, PLAYER_2_KEYS,
     FONT_TITLE_PATH, FONT_BODY_PATH,
 )
 from entity.player import Player
 from entity.customer import Customer
 from position import Position
-from recipe_catalog import RecipeCatalog
 from interactable.creator import Creator
 from interactable.deletor import Deletor
 from interactable.holder import Holder
@@ -127,8 +126,7 @@ class PlayerZone:
         )
 
         # Customer management
-        self._customers:   list[Customer] = []
-        self._spawn_timer: float          = CUSTOMER_SPAWN_INTERVAL
+        self._customers: list[Customer] = []
         
         # Interactables management
         self.interactables = []
@@ -162,11 +160,6 @@ class PlayerZone:
     # ------------------------------------------------------------------
 
     def update(self, dt: float):
-        self._spawn_timer -= dt
-        if self._spawn_timer <= 0 and len(self._customers) < CUSTOMER_MAX_COUNT:
-            self._spawn_customer()
-            self._spawn_timer = CUSTOMER_SPAWN_INTERVAL
-
         self._update_queue_positions()
         self.player.update(dt)
 
@@ -201,8 +194,10 @@ class PlayerZone:
                 if customer.state == CustomerState.WAITING:
                     customer.state = CustomerState.QUEUED
 
-    def _spawn_customer(self):
-        recipe   = RecipeCatalog.random()
+    def try_spawn(self, recipe):
+        """Spawn a customer with the given recipe (called by Map for synchronized spawns)."""
+        if len(self._customers) >= CUSTOMER_MAX_COUNT:
+            return
         customer = Customer(
             position       = Position(self._spawn_pos.x, self._spawn_pos.y),
             wait_position  = Position(self._wait_pos.x,  self._wait_pos.y),
