@@ -28,19 +28,22 @@ def _load_sprites():
     if _frames:
         return
     try:
-        sheet    = pygame.image.load(PLAYER_SPRITE_PATH).convert_alpha()
-        frame_w  = sheet.get_width()  // _COLS
-        frame_h  = sheet.get_height() // _ROWS
-        scale    = PLAYER_SPRITE_SCALE
-        ratio    = scale / frame_h
-        new_w    = int(frame_w * ratio)
-        _frames  = []
+        sheet   = pygame.image.load(PLAYER_SPRITE_PATH).convert_alpha()
+        sw, sh  = sheet.get_width(), sheet.get_height()
+        frame_w = sw // _COLS
+        frame_h = sh // _ROWS
+        scale   = PLAYER_SPRITE_SCALE
+        new_w   = int(frame_w * scale / frame_h)
+
+        _frames = []
         for row in range(_ROWS):
             row_frames = []
             for col in range(_COLS):
-                raw    = sheet.subsurface(col * frame_w, row * frame_h, frame_w, frame_h)
-                scaled = pygame.transform.scale(raw, (new_w, scale))
-                row_frames.append(scaled)
+                raw  = sheet.subsurface(col * frame_w, row * frame_h, frame_w, frame_h)
+                full = pygame.transform.scale(raw, (new_w, scale))
+                # Trim 2px from the right to remove the dark border artifact
+                trimmed = full.subsurface(0, 0, max(1, new_w - 2), scale).copy()
+                row_frames.append(trimmed)
             _frames.append(row_frames)
     except Exception:
         _frames = []   # fallback to colored rect if loading fails
@@ -125,6 +128,7 @@ class Player(Entity):
 
         if _frames:
             frame = _frames[self._direction][self._frame_idx]
+            # Center sprite on player position (all frames uniform width → no jitter)
             x = int(self.position.x) - frame.get_width()  // 2
             y = int(self.position.y) - frame.get_height() // 2
             screen.blit(frame, (x, y))
