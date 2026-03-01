@@ -17,6 +17,7 @@ from core.position import Position
 from interactable.creator import Creator
 from interactable.deletor import Deletor
 from interactable.holder import Holder
+from interactable.hoven import Hoven
 from interactable.workbench import Workbench
 from interactable.counter import Counter
 
@@ -155,9 +156,9 @@ class PlayerZone:
             Deletor(Position(kl + 380, 330), 50, "Poubelle (F)", pygame.K_f, self.player)
         )
 
-        # Holder (optional extra storage)
+        # Hoven (four pour cuire les gâteaux)
         self.interactables.append(
-            Holder(Position(kl + 490, 430), 50, "Stockage (F)", pygame.K_f, self.player)
+            Hoven(Position(kl + 490, 430), 50, "Four (F)", pygame.K_f, self.player)
         )
 
         # Counter (delivery) — bottom of kitchen, centered on customer path
@@ -179,7 +180,10 @@ class PlayerZone:
             return
         if item.cake_type == customer.recipe.cake_type:
             customer.serve()
-            self.score += customer.recipe.reward
+            # Appliquer le multiplicateur de qualité du Counter
+            quality_multiplier = self.counter.get_quality_multiplier()
+            final_score = int(customer.recipe.reward * quality_multiplier)
+            self.score += final_score
             self.player.remove_item()
             self.workbench.reset()
 

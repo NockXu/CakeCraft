@@ -1,4 +1,5 @@
 import pygame
+import math
 from interactable.interactable import Interactable
 from entity.item.cake_item import CakeItem
 from core.position import Position
@@ -20,6 +21,32 @@ class Counter(Interactable):
 
         self._flash_timer   = 0.0
         self._flash_success = True
+        self._quality_multiplier = 1.0  # Stocke le multiplicateur de qualité
+
+    def _calculate_cooking_quality(self, cooked_level: float) -> float:
+        """
+        Calcule le multiplicateur de qualité basé sur la cuisson:
+        - 0.0 à 0.9: plus c'est cuit, plus de points (progression linéaire)
+        - 0.91 à 1.11: score maximum (100% des points)
+        - 1.12 à 2.0: moins de points (dégradation linéaire)
+        Retourne un float entre 0 et 1
+        """
+        if cooked_level <= 0.9:
+            # Progression linéaire de 0.1 à 1.0
+            # 0.0 -> 0.1x, 0.9 -> 1.0x
+            return 0.1 + (cooked_level / 0.9) * 0.9
+        elif cooked_level <= 1.11:
+            # Zone parfaite : score maximum
+            return 1.0
+        else:
+            # Dégradation de 1.0 à 0.1
+            # 1.12 -> 0.98x, 2.0 -> 0.1x
+            t = (cooked_level - 1.11) / (2.0 - 1.11)  # 0 à 1
+            return 1.0 - t * 0.9  # 1.0 -> 0.1
+
+    def get_quality_multiplier(self) -> float:
+        """Retourne le multiplicateur de qualité actuel, arrondi au supérieur"""
+        return math.ceil(self._quality_multiplier * 10) / 10  # Arrondi à 0.1 près
 
     def update(self, dt: float):
         self._flash_timer = max(0.0, self._flash_timer - dt)
@@ -40,6 +67,13 @@ class Counter(Interactable):
             return DeliveryResult.WRONG_ITEM
         if not isinstance(self.player.current_item, CakeItem):
             return DeliveryResult.WRONG_ITEM
+        if not self.player.current_item.cooked > 0:
+            return DeliveryResult.NOT_COOKED
+        
+        # Calculer la qualité de cuisson
+        cake = self.player.current_item
+        self._quality_multiplier = self._calculate_cooking_quality(cake.cooked)
+        
         return DeliveryResult.SUCCESS   # zone handles actual serving via callback
 
     def handle_movement(self):

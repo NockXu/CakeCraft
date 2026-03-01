@@ -41,3 +41,4 @@ class DeliveryResult(Enum):
     NO_CUSTOMER = "no_customer"
     WRONG_ITEM  = "wrong_item"
     WRONG_ORDER = "wrong_order"
+    NOT_COOKED = "not_cooked"

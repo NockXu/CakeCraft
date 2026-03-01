@@ -15,6 +15,9 @@ _font_big  = None
 _font_small = None
 
 class CakeItem(Item):
+
+    cooked : float = 0.0
+    
     def __init__(self, position: Position, cake_type: CakeType):
         bg, _ = _COLORS.get(cake_type, ((200, 200, 200), (0, 0, 0)))
         super().__init__(position, name=cake_type.value, size=34, color=bg)
