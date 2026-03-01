@@ -1,11 +1,8 @@
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from entity.entity import Entity
-from position import Position
-from recipe import Recipe
-from enums import CustomerState
-from constants import CUSTOMER_SIZE, CUSTOMER_SPEED, CUSTOMER_COLOR, CUSTOMER_ANGRY_COLOR
+from core.position import Position
+from recipe.recipe import Recipe
+from core.enums import CustomerState
+from core.constants import CUSTOMER_SIZE, CUSTOMER_SPEED, CUSTOMER_COLOR, CUSTOMER_ANGRY_COLOR
 import pygame
 
 
@@ -17,6 +14,7 @@ class Customer(Entity):
         self.recipe         = recipe
         self.state          = CustomerState.WALKING
         self.patience       = recipe.time_limit
+        self._failed        = False   # True if they left due to patience running out
 
     # ------------------------------------------------------------------
     # Update
@@ -29,22 +27,22 @@ class Customer(Entity):
                 self.state = CustomerState.QUEUED
 
         elif self.state == CustomerState.QUEUED:
-            # Keep moving toward wait_position — it shifts as the queue advances
             if not self._reached(self.wait_position):
                 self._walk_toward(self.wait_position, dt)
-            # Promotion to WAITING is handled by PlayerZone once at front
 
         elif self.state == CustomerState.WAITING:
             self.patience -= dt
             if self.patience <= 0:
-                self.state = CustomerState.LEAVING
+                self._failed = True
+                self.state   = CustomerState.LEAVING
 
         elif self.state in (CustomerState.SERVED, CustomerState.LEAVING):
             self._walk_toward(self.leave_position, dt)
 
     def serve(self):
-        """Call this when the player successfully delivers the order."""
-        self.state = CustomerState.SERVED
+        """Appeler quand le joueur livre la commande avec succès."""
+        self.state   = CustomerState.SERVED
+        self._failed = False
 
     @property
     def patience_ratio(self) -> float:
@@ -56,11 +54,10 @@ class Customer(Entity):
 
     @property
     def is_done(self) -> bool:
-        """True once the customer has fully left and can be removed."""
         return self.state in (CustomerState.SERVED, CustomerState.LEAVING) and self._reached(self.leave_position)
 
     # ------------------------------------------------------------------
-    # Draw — only the customer sprite (order panel is drawn by PlayerZone)
+    # Draw
     # ------------------------------------------------------------------
 
     def draw(self, screen: pygame.Surface):
@@ -69,11 +66,10 @@ class Customer(Entity):
         pygame.draw.circle(screen, color, (x, y), CUSTOMER_SIZE)
 
     # ------------------------------------------------------------------
-    # Internal helpers
+    # Helpers
     # ------------------------------------------------------------------
 
     def _walk_toward(self, target: Position, dt: float):
-        """Move toward target in 2D at CUSTOMER_SPEED px/s."""
         dx   = target.x - self.position.x
         dy   = target.y - self.position.y
         dist = (dx ** 2 + dy ** 2) ** 0.5

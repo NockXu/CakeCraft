@@ -1,10 +1,12 @@
 import pygame
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from menu import Menu
-from run import Game
-from enums import MenuButton
+# Ensure src/ is always on the path (robustness when run from any directory)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from game.menu import Menu
+from game.run import Game
+from core.enums import MenuButton
 
 def main():
     pygame.init()
@@ -14,8 +16,7 @@ def main():
     if result == MenuButton.JOUER:
         Game().run()
     elif result == MenuButton.SCORE:
-        print("You have pressed Score")
-        pass  # TODO: Score screen
+        pass  # TODO: leaderboard screen
 
     pygame.quit()
     sys.exit()

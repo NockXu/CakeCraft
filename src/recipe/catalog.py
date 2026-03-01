@@ -1,13 +1,11 @@
 import random
-from enums import Ingredient, CakeType
-from recipe import Recipe
+from core.enums import Ingredient, CakeType
+from recipe.recipe import Recipe
 
 class RecipeCatalog:
-    """Single source of truth for all recipes in the game.
-    Add a new cake by adding an entry to _recipes — no other file needs to change.
-    """
+    """Source unique de toutes les recettes du jeu."""
 
-    _recipes: dict[CakeType, Recipe] = {
+    _recipes: dict = {
         CakeType.VANILLA_CAKE: Recipe(
             cake_type   = CakeType.VANILLA_CAKE,
             ingredients = (Ingredient.FLOUR, Ingredient.EGG, Ingredient.BUTTER, Ingredient.SUGAR, Ingredient.VANILLA),
@@ -43,5 +41,5 @@ class RecipeCatalog:
         return random.choice(list(cls._recipes.values()))
 
     @classmethod
-    def all(cls) -> list[Recipe]:
+    def all(cls) -> list:
         return list(cls._recipes.values())
