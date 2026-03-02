@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 from core.enums import Side, CustomerState, CakeType, Ingredient, GameState, DeliveryResult
 from core.constants import (
     MAP_SEPARATOR_COLOR, MAP_SEPARATOR_WIDTH, MAP_KITCHEN_RATIO,
@@ -133,6 +134,12 @@ class PlayerZone:
         self._setup_interactables()
         self.player.available_interactables = self.interactables
 
+        # Shuffle des créateurs d'ingrédients (accélère avec le temps)
+        self._shuffle_interval  = 8.0   # secondes entre chaque shuffle
+        self._shuffle_timer     = self._shuffle_interval
+        self._shuffle_min       = 1.5   # intervalle minimum
+        self._shuffle_accel     = 0.92  # facteur de réduction à chaque shuffle
+
     # ── Setup ─────────────────────────────────────────────────────────────────
 
     def _setup_interactables(self):
@@ -141,16 +148,18 @@ class PlayerZone:
         is_right = self.side == Side.RIGHT
 
         # 8 ingredient Creators in 2 rows of 4
+        self._creators = []
         for i, ingr in enumerate(Ingredient):
             col = i % 4
             row = i // 4
             if is_right:
-                # Effet miroir : inverser les colonnes
                 cx = kr - 80 - col * 105
             else:
                 cx = kl + 80 + col * 105
             cy = 90 + row * 100
-            self.interactables.append(Creator(Position(cx, cy), 50, ingr, self.player))
+            c = Creator(Position(cx, cy), 50, ingr, self.player)
+            self._creators.append(c)
+            self.interactables.append(c)
 
         # Workbench
         wb_x = kr - 200 if is_right else kl + 200
@@ -176,6 +185,17 @@ class PlayerZone:
         ctr.on_delivery = self._handle_delivery
         self.counter = ctr
         self.interactables.append(ctr)
+
+    # ── Shuffle ────────────────────────────────────────────────────────────────
+
+    def _shuffle_creators(self):
+        """Mélange aléatoirement les ingrédients entre les Creators."""
+        ingredients = [c.ingredient_type for c in self._creators]
+        random.shuffle(ingredients)
+        for creator, ingr in zip(self._creators, ingredients):
+            creator.ingredient_type = ingr
+            creator.text = f"Prendre {ingr.value} (F)"
+            creator.help_bubble = None  # force le recalcul de la bulle
 
     # ── Delivery callback ──────────────────────────────────────────────────────
 
@@ -220,6 +240,14 @@ class PlayerZone:
         self._update_queue_positions()
         self.player.update(dt)
 
+        # Shuffle périodique des créateurs, de plus en plus rapide
+        self._shuffle_timer -= dt
+        if self._shuffle_timer <= 0:
+            self._shuffle_creators()
+            self._shuffle_interval = max(self._shuffle_min,
+                                         self._shuffle_interval * self._shuffle_accel)
+            self._shuffle_timer = self._shuffle_interval
+
         # Update interactables that have an update() method
         for interactable in self.interactables:
             if hasattr(interactable, 'update'):
@@ -250,8 +278,6 @@ class PlayerZone:
                 customer.wait_position = Position(self._wait_pos.x, self._wait_pos.y)
                 if customer.state == CustomerState.QUEUED and customer._reached(customer.wait_position):
                     customer.state = CustomerState.WAITING
-                    if self.workbench:
-                        self.workbench.reset()
             else:
                 prev_y = in_line[i - 1].wait_position.y
                 customer.wait_position = Position(self._wait_pos.x, prev_y + spacing)
