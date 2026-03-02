@@ -11,11 +11,12 @@ from recipe.catalog import RecipeCatalog
 
 
 class Map:
-    def __init__(self):
-        self.screen      = Screen().screen
-        self.running     = True
-        self.zone_left   = PlayerZone(self.screen, Side.LEFT)
-        self.zone_right  = PlayerZone(self.screen, Side.RIGHT)
+    def __init__(self, bot_left: bool = False, bot_right: bool = False):
+        from game.bot_zone import BotZone
+        self.screen     = Screen().screen
+        self.running    = True
+        self.zone_left  = BotZone(self.screen, Side.LEFT)  if bot_left  else PlayerZone(self.screen, Side.LEFT)
+        self.zone_right = BotZone(self.screen, Side.RIGHT) if bot_right else PlayerZone(self.screen, Side.RIGHT)
         self.clock       = pygame.time.Clock()
 
         # Spawn timer

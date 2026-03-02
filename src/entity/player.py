@@ -2,7 +2,7 @@ from interactable.interactable import Interactable
 from entity.entity import Entity
 from core.position import Position
 import pygame
-from core.constants import PLAYER_SIZE, PLAYER_SPRITE_PATH, PLAYER_SPRITE_SCALE, PLAYER_ANIM_FPS, PLAYER_SPEED
+from core.constants import PLAYER_SIZE, PLAYER_SPRITE_PATH, PLAYER_SPRITE_SCALE, PLAYER_ANIM_FPS, PLAYER_SPEED, PLAYER_COLLISION_H
 
 
 # Sprite sheet row indices (RPG Maker VX format)
@@ -152,11 +152,13 @@ class Player(Entity):
             self.move(0, PLAYER_SPEED)
 
     def get_collision_rect(self):
+        # Small hitbox at feet level (bottom of sprite)
+        feet_y = self.position.y + self.collision_h // 2 - PLAYER_COLLISION_H
         return pygame.Rect(
             self.position.x - self.collision_w // 2,
-            self.position.y - self.collision_h // 2,
+            feet_y,
             self.collision_w,
-            self.collision_h,
+            PLAYER_COLLISION_H,
         )
 
     def check_collision_with_interactables(self):

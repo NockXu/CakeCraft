@@ -11,8 +11,9 @@ class Hoven(Holder):
     def __init__(self, position: Position, collision_size: int, text: str,
                  activate_key: int = None, player=None):
         super().__init__(position, collision_size, text, activate_key, player)
-        self.cooking_speed = 0.1  # Vitesse de cuisson (unités par seconde)
-        self.is_cooking = False
+        self.cooking_speed = 0.1  # units/s — 1.0 = fully cooked (base: 10s)
+        self.score_ref     = None  # set to a callable returning the player's score
+        self.is_cooking    = False
         self.cooking_progress = 0.0
         self.burned_recently = False  # Indicateur visuel pour gâteau brûlé
         self.burned_timer = 0.0
@@ -42,9 +43,12 @@ class Hoven(Holder):
         return False
 
     def update(self, dt: float):
-        """Met à jour la cuisson si un CakeItem est en train de cuire"""
+        # Recalculate cooking speed from score: +0.01/s per 100pts, capped at 0.25/s (4s min)
+        if self.score_ref is not None:
+            bonus = (self.score_ref() // 100) * 0.01
+            self.cooking_speed = min(0.25, 0.1 + bonus)
+
         if self.is_cooking and self.held_item and isinstance(self.held_item, CakeItem):
-            # Augmenter la cuisson
             self.held_item.cooked += self.cooking_speed * dt
             
             # Supprimer le gâteau s'il atteint 200% (brûlé)

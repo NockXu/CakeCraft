@@ -134,11 +134,12 @@ class PlayerZone:
         self._setup_interactables()
         self.player.available_interactables = self.interactables
 
-        # Shuffle des créateurs d'ingrédients (accélère avec le temps)
-        self._shuffle_interval  = 8.0   # secondes entre chaque shuffle
-        self._shuffle_timer     = self._shuffle_interval
-        self._shuffle_min       = 1.5   # intervalle minimum
-        self._shuffle_accel     = 0.92  # facteur de réduction à chaque shuffle
+        self._shuffle_interval     = 8.0   # seconds between shuffles
+        self._shuffle_timer        = self._shuffle_interval
+        self._shuffle_min          = 1.5   # current minimum interval (shrinks with score)
+        self._shuffle_min_base     = 1.5   # starting minimum
+        self._shuffle_min_floor    = 0.3   # hard floor
+        self._shuffle_accel        = 0.92
 
     # ── Setup ─────────────────────────────────────────────────────────────────
 
@@ -175,9 +176,9 @@ class PlayerZone:
 
         # Hoven (four pour cuire les gâteaux)
         hoven_x = kr - 490 if is_right else kl + 490
-        self.interactables.append(
-            Hoven(Position(hoven_x, 430), 50, "Four (F)", pygame.K_f, self.player)
-        )
+        hoven   = Hoven(Position(hoven_x, 430), 50, "Four (F)", pygame.K_f, self.player)
+        hoven.score_ref = lambda: self.score
+        self.interactables.append(hoven)
 
         # Counter (delivery) — bottom of kitchen, centered on customer path
         counter_y = self.kitchen_rect.bottom - 50
@@ -219,7 +220,9 @@ class PlayerZone:
             customer.serve()
             customer.receive_item(item)
             quality_multiplier = self.counter.get_quality_multiplier()
-            final_score = int(customer.recipe.reward * quality_multiplier)
+            tier = self.score // 1000
+            difficulty_bonus = 1.0 + tier * 0.5
+            final_score = int(customer.recipe.reward * quality_multiplier * difficulty_bonus)
             self.score += final_score
             self.player.remove_item()
 
@@ -236,6 +239,14 @@ class PlayerZone:
     def update(self, dt: float):
         self._update_queue_positions()
         self.player.update(dt)
+
+        # Update shuffle min speed: -0.2s per 1000pts, floor 0.3s until 10000pts then no floor
+        tier = self.score // 1000
+        raw  = self._shuffle_min_base - tier * 0.2
+        if self.score < 10000:
+            self._shuffle_min = max(self._shuffle_min_floor, raw)
+        else:
+            self._shuffle_min = max(0.05, raw)  # near-instant floor above 10000pts
 
         self._shuffle_timer -= dt
         if self._shuffle_timer <= 0:

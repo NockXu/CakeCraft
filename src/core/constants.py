@@ -51,6 +51,7 @@ PLAYER_2_COLOR = (50, 100, 220)
 PLAYER_SPRITE_PATH  = _asset('sprites', 'player.png')
 PLAYER_SPRITE_SCALE = 56
 PLAYER_ANIM_FPS     = 8
+PLAYER_COLLISION_H  = 14  # hitbox height at feet level
 
 FONT_TITLE_PATH = _asset('fonts', 'Pacifico-Regular.ttf')
 FONT_BODY_PATH  = _asset('fonts', 'Nunito-Regular.ttf')
@@ -78,5 +79,5 @@ ITEM_SIZE = 30
 # DIFFICULTY / GAME
 MAX_FAILED_CUSTOMERS = 3
 DIFFICULTY_SPEED     = 0.005   # patience multiplier decreases by 0.5% per second
-MIN_PATIENCE_RATIO   = 0.3     # patience never drops below 30% of original
+MIN_PATIENCE_RATIO   = 0.45    # patience never drops below ~20s on shortest recipe (45s * 0.45)
 MIN_SPAWN_INTERVAL   = 3.0     # fastest spawn rate (seconds)

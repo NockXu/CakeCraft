@@ -6,9 +6,11 @@ from game.event_handler import eventHandler
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, bot_left: bool = False, bot_right: bool = False):
         pygame.init()
-        self.map          = Map()
+        self._bot_left    = bot_left
+        self._bot_right   = bot_right
+        self.map          = Map(bot_left=bot_left, bot_right=bot_right)
         self.eventHandler = eventHandler()
         self.eventHandler.add_thing(self.map.zone_left)
         self.eventHandler.add_thing(self.map.zone_right)
@@ -58,7 +60,6 @@ class Game:
             lost_time_right = self.map.zone_right.lost_time,
         ).run()
         if result == "replay":
-            # Reset and restart
-            self.map     = Map()
+            self.map     = Map(bot_left=self._bot_left, bot_right=self._bot_right)
             self.running = True
             self.run()

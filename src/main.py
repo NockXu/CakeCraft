@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from game.menu import Menu
 from game.run import Game
+from game.player_select import PlayerSelectScreen
 from core.enums import MenuButton
 
 def main():
@@ -14,7 +15,13 @@ def main():
     result = Menu().run()
 
     if result == MenuButton.JOUER:
-        Game().run()
+        mode = PlayerSelectScreen().run()
+        if mode == PlayerSelectScreen.TWO_PLAYERS:
+            Game().run()
+        elif mode == PlayerSelectScreen.P1_VS_BOT:
+            Game(bot_right=True).run()
+        elif mode == PlayerSelectScreen.BOT_VS_P2:
+            Game(bot_left=True).run()
     elif result == MenuButton.SCORE:
         pass  # TODO: leaderboard screen
 
