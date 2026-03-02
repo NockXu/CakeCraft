@@ -15,6 +15,7 @@ class Customer(Entity):
         self.state          = CustomerState.WALKING
         self.patience       = recipe.time_limit
         self._failed        = False   # True if they left due to patience running out
+        self._not_cooked_received = False  # True if they received an uncooked cake
 
     # ------------------------------------------------------------------
     # Update
@@ -44,6 +45,10 @@ class Customer(Entity):
         self.state   = CustomerState.SERVED
         self._failed = False
 
+    def receive_not_cooked(self):
+        """Appeler quand le client reçoit un gâteau pas cuit."""
+        self._not_cooked_received = True
+
     @property
     def patience_ratio(self) -> float:
         return max(0.0, self.patience / self.recipe.time_limit)
@@ -62,7 +67,10 @@ class Customer(Entity):
 
     def draw(self, screen: pygame.Surface):
         x, y  = int(self.position.x), int(self.position.y)
-        color = CUSTOMER_ANGRY_COLOR if self.state == CustomerState.LEAVING else CUSTOMER_COLOR
+        if self.state == CustomerState.LEAVING or self._not_cooked_received:
+            color = CUSTOMER_ANGRY_COLOR
+        else:
+            color = CUSTOMER_COLOR
         pygame.draw.circle(screen, color, (x, y), CUSTOMER_SIZE)
 
     # ------------------------------------------------------------------

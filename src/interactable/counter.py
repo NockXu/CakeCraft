@@ -31,9 +31,11 @@ class Counter(Interactable):
         - 1.12 à 2.0: moins de points (dégradation linéaire)
         Retourne un float entre 0 et 1
         """
-        if cooked_level <= 0.9:
+        if cooked_level == 0:
+            return 0
+        elif cooked_level <= 0.9:
             # Progression linéaire de 0.1 à 1.0
-            # 0.0 -> 0.1x, 0.9 -> 1.0x
+            # 0.01 -> 0.1x, 0.9 -> 1.0x
             return 0.1 + (cooked_level / 0.9) * 0.9
         elif cooked_level <= 1.11:
             # Zone parfaite : score maximum

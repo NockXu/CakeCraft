@@ -187,6 +187,14 @@ class PlayerZone:
         item = self.player.current_item
         if not isinstance(item, CakeItem):
             return
+        
+        if result == DeliveryResult.NOT_COOKED:
+            customer.receive_not_cooked()
+            customer.state = CustomerState.LEAVING
+            self.player.remove_item()
+            self.workbench.reset()
+            return
+        
         if item.cake_type == customer.recipe.cake_type:
             customer.serve()
             # Appliquer le multiplicateur de qualité du Counter
