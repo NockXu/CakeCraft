@@ -237,7 +237,6 @@ class PlayerZone:
         self._update_queue_positions()
         self.player.update(dt)
 
-        # Shuffle périodique des créateurs, de plus en plus rapide
         self._shuffle_timer -= dt
         if self._shuffle_timer <= 0:
             self._shuffle_creators()
