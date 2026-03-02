@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 from core.enums import Side, CustomerState, CakeType, Ingredient, GameState, DeliveryResult
 from core.constants import (
     MAP_SEPARATOR_COLOR, MAP_SEPARATOR_WIDTH, MAP_KITCHEN_RATIO,
@@ -133,6 +134,12 @@ class PlayerZone:
         self._setup_interactables()
         self.player.available_interactables = self.interactables
 
+        # Shuffle des créateurs d'ingrédients (accélère avec le temps)
+        self._shuffle_interval  = 8.0   # secondes entre chaque shuffle
+        self._shuffle_timer     = self._shuffle_interval
+        self._shuffle_min       = 1.5   # intervalle minimum
+        self._shuffle_accel     = 0.92  # facteur de réduction à chaque shuffle
+
     # ── Setup ─────────────────────────────────────────────────────────────────
 
     def _setup_interactables(self):
@@ -141,16 +148,18 @@ class PlayerZone:
         is_right = self.side == Side.RIGHT
 
         # 8 ingredient Creators in 2 rows of 4
+        self._creators = []
         for i, ingr in enumerate(Ingredient):
             col = i % 4
             row = i // 4
             if is_right:
-                # Effet miroir : inverser les colonnes
                 cx = kr - 80 - col * 105
             else:
                 cx = kl + 80 + col * 105
             cy = 90 + row * 100
-            self.interactables.append(Creator(Position(cx, cy), 50, ingr, self.player))
+            c = Creator(Position(cx, cy), 50, ingr, self.player)
+            self._creators.append(c)
+            self.interactables.append(c)
 
         # Workbench
         wb_x = kr - 200 if is_right else kl + 200
@@ -177,6 +186,17 @@ class PlayerZone:
         self.counter = ctr
         self.interactables.append(ctr)
 
+    # ── Shuffle ────────────────────────────────────────────────────────────────
+
+    def _shuffle_creators(self):
+        """Mélange aléatoirement les ingrédients entre les Creators."""
+        ingredients = [c.ingredient_type for c in self._creators]
+        random.shuffle(ingredients)
+        for creator, ingr in zip(self._creators, ingredients):
+            creator.ingredient_type = ingr
+            creator.text = f"Prendre {ingr.value} (F)"
+            creator.help_bubble = None  # force le recalcul de la bulle
+
     # ── Delivery callback ──────────────────────────────────────────────────────
 
     def _handle_delivery(self, result: DeliveryResult):
@@ -190,21 +210,18 @@ class PlayerZone:
         
         if result == DeliveryResult.NOT_COOKED:
             customer.receive_not_cooked()
-            customer.receive_item(item)  # Give the item to customer
+            customer.receive_item(item)
             customer.state = CustomerState.LEAVING
             self.player.remove_item()
-            self.workbench.reset()
             return
-        
+
         if item.cake_type == customer.recipe.cake_type:
             customer.serve()
-            customer.receive_item(item)  # Give the item to customer
-            # Appliquer le multiplicateur de qualité du Counter
+            customer.receive_item(item)
             quality_multiplier = self.counter.get_quality_multiplier()
             final_score = int(customer.recipe.reward * quality_multiplier)
             self.score += final_score
             self.player.remove_item()
-            self.workbench.reset()
 
     # ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -219,6 +236,13 @@ class PlayerZone:
     def update(self, dt: float):
         self._update_queue_positions()
         self.player.update(dt)
+
+        self._shuffle_timer -= dt
+        if self._shuffle_timer <= 0:
+            self._shuffle_creators()
+            self._shuffle_interval = max(self._shuffle_min,
+                                         self._shuffle_interval * self._shuffle_accel)
+            self._shuffle_timer = self._shuffle_interval
 
         # Update interactables that have an update() method
         for interactable in self.interactables:
@@ -250,8 +274,6 @@ class PlayerZone:
                 customer.wait_position = Position(self._wait_pos.x, self._wait_pos.y)
                 if customer.state == CustomerState.QUEUED and customer._reached(customer.wait_position):
                     customer.state = CustomerState.WAITING
-                    if self.workbench:
-                        self.workbench.reset()
             else:
                 prev_y = in_line[i - 1].wait_position.y
                 customer.wait_position = Position(self._wait_pos.x, prev_y + spacing)
@@ -276,7 +298,9 @@ class PlayerZone:
         pygame.draw.rect(self.screen, MAP_COMPTOIR_COLOR, self.comptoir_rect)
 
         waiting = self.get_waiting_customer()
-        self._draw_order_panel(waiting)
+        queued  = next((c for c in self._customers
+                        if c.state == CustomerState.QUEUED), None)
+        self._draw_order_panel(waiting, queued)
 
         pygame.draw.rect(self.screen, MAP_SEPARATOR_COLOR,
                          self.ingredient_box_rect, MAP_SEPARATOR_WIDTH)
@@ -289,7 +313,7 @@ class PlayerZone:
 
         self.player.draw(self.screen)
 
-    def _draw_order_panel(self, customer):
+    def _draw_order_panel(self, customer, next_customer=None):
         global _FONT_TITLE, _FONT_BODY, _FONT_LABEL
         if _FONT_TITLE is None:
             try:    _FONT_TITLE = pygame.font.Font(FONT_TITLE_PATH, 24)
@@ -313,7 +337,7 @@ class PlayerZone:
             mid_y = (box.top + box.bottom - HUD_H) // 2
             self.screen.blit(msg,  msg.get_rect(center=(box.centerx, mid_y - 12)))
             self.screen.blit(hint, hint.get_rect(center=(box.centerx, mid_y + 14)))
-            self._draw_panel_hud(box, HUD_H)
+            self._draw_panel_hud(box, HUD_H, next_customer)
             return
 
         recipe          = customer.recipe
@@ -369,7 +393,7 @@ class PlayerZone:
         self.screen.blit(pts_surf, pts_rect)
         _draw_star(self.screen, pts_rect.left - 14, pts_rect.centery, 10, (215, 168, 0))
 
-        self._draw_panel_hud(box, HUD_H)
+        self._draw_panel_hud(box, HUD_H, next_customer)
 
         bar_bg = pygame.Rect(box.left, box.bottom - BAR_H, box.width, BAR_H)
         pygame.draw.rect(self.screen, (212, 202, 188), bar_bg)
@@ -388,12 +412,23 @@ class PlayerZone:
         time_surf = _FONT_LABEL.render(f"{int(customer.patience)}s", True, (30, 18, 8))
         self.screen.blit(time_surf, time_surf.get_rect(centery=bar_bg.centery, x=box.left + 8))
 
-    def _draw_panel_hud(self, box: pygame.Rect, hud_h: int):
-        """Score + coeurs dans une bande en bas du panneau de commande."""
+    def _draw_panel_hud(self, box: pygame.Rect, hud_h: int, next_customer=None):
+        """Score + coeurs + prochain gâteau dans une bande en bas du panneau de commande."""
         bar_h   = 22
         hud_y   = box.bottom - bar_h - hud_h
         hud_rect = pygame.Rect(box.left, hud_y, box.width, hud_h)
         pygame.draw.rect(self.screen, (238, 224, 200), hud_rect)
+
+        # Prochain gâteau (au-dessus du HUD)
+        if next_customer is not None:
+            NEXT_H = 22
+            next_rect = pygame.Rect(box.left, hud_y - NEXT_H, box.width, NEXT_H)
+            pygame.draw.rect(self.screen, (228, 212, 185), next_rect)
+            lbl  = _FONT_LABEL.render("Prochain : ", True, (140, 105, 65))
+            name = _FONT_LABEL.render(next_customer.recipe.cake_type.value, True, (80, 50, 20))
+            x = box.left + _PAD
+            self.screen.blit(lbl,  lbl.get_rect(centery=next_rect.centery, left=x))
+            self.screen.blit(name, name.get_rect(centery=next_rect.centery, left=x + lbl.get_width()))
 
         # Score (left-aligned)
         score_surf = _FONT_LABEL.render(f"Score : {self.score} pts", True, (80, 50, 20))
