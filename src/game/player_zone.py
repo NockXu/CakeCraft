@@ -190,6 +190,7 @@ class PlayerZone:
         
         if result == DeliveryResult.NOT_COOKED:
             customer.receive_not_cooked()
+            customer.receive_item(item)  # Give the item to customer
             customer.state = CustomerState.LEAVING
             self.player.remove_item()
             self.workbench.reset()
@@ -197,6 +198,7 @@ class PlayerZone:
         
         if item.cake_type == customer.recipe.cake_type:
             customer.serve()
+            customer.receive_item(item)  # Give the item to customer
             # Appliquer le multiplicateur de qualité du Counter
             quality_multiplier = self.counter.get_quality_multiplier()
             final_score = int(customer.recipe.reward * quality_multiplier)

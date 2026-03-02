@@ -16,6 +16,7 @@ class Customer(Entity):
         self.patience       = recipe.time_limit
         self._failed        = False   # True if they left due to patience running out
         self._not_cooked_received = False  # True if they received an uncooked cake
+        self._carried_item  = None   # Item that the customer is carrying
 
     # ------------------------------------------------------------------
     # Update
@@ -39,6 +40,10 @@ class Customer(Entity):
 
         elif self.state in (CustomerState.SERVED, CustomerState.LEAVING):
             self._walk_toward(self.leave_position, dt)
+        
+        # Update carried item position to follow customer
+        if self._carried_item:
+            self._carried_item.position = Position(self.position.x, self.position.y)
 
     def serve(self):
         """Appeler quand le joueur livre la commande avec succès."""
@@ -48,6 +53,12 @@ class Customer(Entity):
     def receive_not_cooked(self):
         """Appeler quand le client reçoit un gâteau pas cuit."""
         self._not_cooked_received = True
+
+    def receive_item(self, item):
+        """Appeler quand le client reçoit un item (gâteau)."""
+        self._carried_item = item
+        # Update item position to follow the customer
+        item.position = Position(self.position.x, self.position.y)
 
     @property
     def patience_ratio(self) -> float:
@@ -72,6 +83,13 @@ class Customer(Entity):
         else:
             color = CUSTOMER_COLOR
         pygame.draw.circle(screen, color, (x, y), CUSTOMER_SIZE)
+        
+        # Draw the carried item (cake) above the customer
+        if self._carried_item:
+            from core.constants import ITEM_SIZE
+            item_x = x
+            item_y = y - CUSTOMER_SIZE - ITEM_SIZE // 2 - 5
+            self._carried_item._render(screen, item_x, item_y)
 
     # ------------------------------------------------------------------
     # Helpers
