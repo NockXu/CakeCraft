@@ -21,6 +21,7 @@ class Workbench(Interactable):
         self.activate_key    = activate_key
         self.current_recipe  = None     # set by PlayerZone each frame
         self._deposited      = []       # list of Ingredient deposited so far
+        self._deposited_items = []       # list of IngredientItem objects (for recovery)
         self._output_item    = None     # CakeItem ready to pick up
 
     # ------------------------------------------------------------------
@@ -30,6 +31,7 @@ class Workbench(Interactable):
     def reset(self):
         """Vider le plan de travail (nouveau client ou mauvaise livraison)."""
         self._deposited   = []
+        self._deposited_items = []
         self._output_item = None
 
     def get_deposited(self) -> list:
@@ -43,17 +45,25 @@ class Workbench(Interactable):
         if key != self.activate_key or not self.in_range:
             return
 
-        # Priority 1: player picks up finished cake
+        # Priority 1: player picks up finished cake OR pick up last ingredient put on the table
         if self._output_item is not None and not self.player.has_item():
             self.player.give_item(self._output_item)
             self._output_item = None
             return
+        elif self._output_item is None and self._deposited_items and not self.player.has_item():
+            item = self._deposited_items.pop()
+            # Also remove the corresponding ingredient from _deposited list
+            self._deposited.pop()
+            self.player.give_item(item)
+            return  # Important: stop here to avoid re-depositing
 
         # Priority 2: player deposits an ingredient
         if self.player.has_item() and isinstance(self.player.current_item, IngredientItem):
-            ingr = self.player.current_item.ingredient_type
+            ingr_item = self.player.current_item
+            ingr = ingr_item.ingredient_type
             self.player.remove_item()
             self._deposited.append(ingr)
+            self._deposited_items.append(ingr_item)  # Store the actual item for recovery
             # Check if the recipe is complete
             if self.current_recipe and self._is_complete():
                 self._assemble_cake()
@@ -69,6 +79,7 @@ class Workbench(Interactable):
             self.current_recipe.cake_type,
         )
         self._deposited = []
+        self._deposited_items = []  # Clear deposited items when cake is assembled
 
     def handle_movement(self):
         pass

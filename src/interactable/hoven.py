@@ -11,7 +11,7 @@ class Hoven(Holder):
     def __init__(self, position: Position, collision_size: int, text: str,
                  activate_key: int = None, player=None):
         super().__init__(position, collision_size, text, activate_key, player)
-        self.cooking_speed = 0.5  # Vitesse de cuisson (unités par seconde)
+        self.cooking_speed = 0.1  # Vitesse de cuisson (unités par seconde)
         self.is_cooking = False
         self.cooking_progress = 0.0
         self.burned_recently = False  # Indicateur visuel pour gâteau brûlé
