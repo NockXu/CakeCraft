@@ -28,7 +28,7 @@ class Interactable:
         screen.blit(surf, (self.position.x - self.collision_size // 2,
                            self.position.y - self.collision_size // 2))
 
-    def draw_help(self, screen: pygame.Surface, color: tuple = (0, 0, 0)):
+    def draw_help(self, screen: pygame.Surface, color: tuple = (30, 30, 30)):
         if self.in_range:
             # Initialiser la bulle d'aide si nécessaire
             if self.help_bubble is None:

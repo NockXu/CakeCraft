@@ -18,10 +18,10 @@ class Hoven(Holder):
         self.burned_timer = 0.0
         
         # Créer la bulle de progression pour la cuisson
-        bubble_width = collision_size + 20
-        bubble_height = 25
-        bubble_x = position.x - bubble_width // 2
-        bubble_y = position.y - collision_size - bubble_height - 10
+        bubble_width = collision_size
+        bubble_height = 10
+        bubble_x = position.x - collision_size // 2  # Centrer horizontalement avec le four
+        bubble_y = position.y + collision_size // 2  # Juste en dessous du four
         self.progress_bubble = ProgressBubble(bubble_x, bubble_y, bubble_width, bubble_height, padding=3)
 
     def hold_item(self) -> bool:

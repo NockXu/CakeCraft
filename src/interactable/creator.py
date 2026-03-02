@@ -33,7 +33,7 @@ class Creator(Interactable):
         font = pygame.font.Font(None, 18)
         label = font.render(self.ingredient_type.value, True, fg)
         screen.blit(label, label.get_rect(center=rect.center))
-        self.draw_help(screen, fg)
+        self.draw_help(screen, (30, 30, 30))  # Use consistent dark gray for help text
 
     def handle_keydown(self, key):
         if key == self.activate_key:

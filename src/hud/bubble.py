@@ -104,10 +104,10 @@ class ProgressBubble(Bubble):
     
     def draw_progress_bar(self, screen: pygame.Surface, progress: float):
         """Dessine une barre de progression dans la bulle avec dégradé de couleur"""
-        bar_height = 8  # Augmenté pour mieux remplir la bulle compacte
-        bar_y = self.y + (self.height - bar_height) // 2  # Centré verticalement
+        bar_height = self.height - 2 * self.padding  # Hauteur avec padding pour ne pas dépasser les bordures
+        bar_y = self.y + self.padding  # Position avec padding
         bar_x = self.x + self.padding
-        bar_width = self.width - 2 * self.padding
+        bar_width = self.width - 2 * self.padding  # Largeur avec padding des deux côtés
         
         # Progression avec couleur dynamique
         bar_color = self._get_progress_color(progress)
@@ -135,8 +135,8 @@ def test_bubble():
     clock = pygame.time.Clock()
     
     # Créer deux bulles optimisées
-    bubble_text = Bubble(20, 30, 220, 80, padding=8)      # Bulle de texte
-    bubble_progress = Bubble(260, 50, 220, 40, padding=5)  # Bulle de progression compacte
+    bubble_text = TextBubble(20, 30, 220, 80, padding=8)      # Bulle de texte
+    bubble_progress = ProgressBubble(260, 50, 220, 40, padding=5)  # Bulle de progression compacte
     
     font_title = pygame.font.Font(None, 18)
     font_small = pygame.font.Font(None, 14)
