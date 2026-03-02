@@ -137,28 +137,37 @@ class PlayerZone:
 
     def _setup_interactables(self):
         kl = self.kitchen_rect.left
+        kr = self.kitchen_rect.right
+        is_right = self.side == Side.RIGHT
 
         # 8 ingredient Creators in 2 rows of 4
         for i, ingr in enumerate(Ingredient):
             col = i % 4
             row = i // 4
-            cx  = kl + 80 + col * 105
-            cy  = 90 + row * 100
+            if is_right:
+                # Effet miroir : inverser les colonnes
+                cx = kr - 80 - col * 105
+            else:
+                cx = kl + 80 + col * 105
+            cy = 90 + row * 100
             self.interactables.append(Creator(Position(cx, cy), 50, ingr, self.player))
 
         # Workbench
-        wb = Workbench(Position(kl + 200, 330), 90, self.player)
+        wb_x = kr - 200 if is_right else kl + 200
+        wb = Workbench(Position(wb_x, 330), 90, self.player)
         self.workbench = wb
         self.interactables.append(wb)
 
         # Deletor
+        del_x = kr - 380 if is_right else kl + 380
         self.interactables.append(
-            Deletor(Position(kl + 380, 330), 50, "Poubelle (F)", pygame.K_f, self.player)
+            Deletor(Position(del_x, 330), 50, "Poubelle (F)", pygame.K_f, self.player)
         )
 
         # Hoven (four pour cuire les gâteaux)
+        hoven_x = kr - 490 if is_right else kl + 490
         self.interactables.append(
-            Hoven(Position(kl + 490, 430), 50, "Four (F)", pygame.K_f, self.player)
+            Hoven(Position(hoven_x, 430), 50, "Four (F)", pygame.K_f, self.player)
         )
 
         # Counter (delivery) — bottom of kitchen, centered on customer path
