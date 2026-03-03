@@ -31,15 +31,20 @@ def _load_fonts():
 
 class ScoreScreen:
     def __init__(self, score_left: int, score_right: int,
-                 lost_time_left: float = None, lost_time_right: float = None):
+                 lost_time_left: float = None, lost_time_right: float = None,
+                 vs_mode: bool = False, bot_left: bool = False, bot_right: bool = False):
         self.screen          = Screen().screen
         self.score_left      = score_left
         self.score_right     = score_right
         self.lost_time_left  = lost_time_left
         self.lost_time_right = lost_time_right
+        self.vs_mode         = vs_mode
+        self.bot_left        = bot_left
+        self.bot_right       = bot_right
         self.result          = None
         self.running         = True
         self.buttons         = {}
+        self._selected       = 0  # 0 = Rejouer, 1 = Quitter
 
     @staticmethod
     def _fmt_time(seconds: float) -> str:
@@ -49,13 +54,12 @@ class ScoreScreen:
         return f"{m}:{s:02d}"
 
     def _winner(self) -> str:
-        """Qui a tenu le plus longtemps (ou le plus de points si les deux ont perdu en même temps)."""
         if self.lost_time_left is None and self.lost_time_right is None:
             if self.score_left > self.score_right:
                 return "Joueur 1"
             elif self.score_right > self.score_left:
                 return "Joueur 2"
-            return "Égalité !"
+            return "Egalite !"
         if self.lost_time_left is None:
             return "Joueur 1"
         if self.lost_time_right is None:
@@ -64,30 +68,62 @@ class ScoreScreen:
             return "Joueur 1"
         if self.lost_time_right > self.lost_time_left:
             return "Joueur 2"
-        # Same time — compare scores
         if self.score_left > self.score_right:
             return "Joueur 1"
         if self.score_right > self.score_left:
             return "Joueur 2"
-        return "Égalité !"
+        return "Egalite !"
+
+    def _ask_names_and_save(self):
+        """Show name entry for human players then persist to scoreboard."""
+        from game.name_entry import NameEntry, NameEntryDuo
+        import game.scoreboard as sb
+
+        if self.vs_mode:
+            # Both players enter their name simultaneously
+            name1, name2 = NameEntryDuo().run()
+            if name1:
+                sb.add_solo(name1, self.score_left)
+            if name2:
+                sb.add_solo(name2, self.score_right)
+            if name1 and name2:
+                sb.add_vs(name1, self.score_left, name2, self.score_right)
+        elif self.bot_right:
+            # J1 (left) is human
+            name = NameEntry(0, "Joueur 1 — Entrez votre nom").run()
+            if name:
+                sb.add_solo(name, self.score_left)
+        elif self.bot_left:
+            # J2 (right) is human
+            name = NameEntry(1, "Joueur 2 — Entrez votre nom").run()
+            if name:
+                sb.add_solo(name, self.score_right)
 
     def handle_events(self):
+        _ORDER = ["replay", "quit"]
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                self.result = "quit"; self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_ESCAPE, pygame.K_6):
+                    self.result = "quit"; self.running = False
+                elif event.key in (pygame.K_LEFT, pygame.K_RIGHT):
+                    self._selected = 1 - self._selected
+                elif event.key in (pygame.K_1, pygame.K_RETURN):
+                    self.result = _ORDER[self._selected]; self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 for name, rect in self.buttons.items():
                     if rect.collidepoint(event.pos):
                         self.result = name; self.running = False
 
-    def _draw_button(self, text: str, cx: int, cy: int) -> pygame.Rect:
+    def _draw_button(self, text: str, cx: int, cy: int, selected: bool = False) -> pygame.Rect:
         font  = _font_small
         label = font.render(text, True, _DARK_BG)
         rect  = label.get_rect(center=(cx, cy))
         pad   = pygame.Rect(rect.left - 24, rect.top - 12, rect.width + 48, rect.height + 24)
         pygame.draw.rect(self.screen, _GOLD, pad, border_radius=14)
+        if selected:
+            pygame.draw.rect(self.screen, (255, 255, 255), pad, 3, border_radius=14)
         self.screen.blit(label, rect)
         return pad
 
@@ -98,18 +134,14 @@ class ScoreScreen:
 
         winner = self._winner()
 
-        # ── Title
         title = _font_title.render("Fin de partie !", True, _GOLD)
         self.screen.blit(title, title.get_rect(centerx=w // 2, top=40))
 
-        # ── Winner banner
         win_surf = _font_body.render(f"Gagnant : {winner}", True, _GOLD)
         self.screen.blit(win_surf, win_surf.get_rect(centerx=w // 2, top=130))
 
-        # ── Separator
         pygame.draw.line(self.screen, (80, 60, 40), (60, 200), (w - 60, 200), 2)
 
-        # ── Player columns
         col_y = 220
         for side, score, lost_t, label in [
             ("left",  self.score_left,  self.lost_time_left,  "Joueur 1"),
@@ -131,16 +163,20 @@ class ScoreScreen:
             )
             self.screen.blit(survived, survived.get_rect(centerx=cx, top=col_y + 105))
 
-        # ── Buttons
         btn_y = h - 100
-        replay_rect = self._draw_button("Rejouer",  w // 2 - 130, btn_y)
-        quit_rect   = self._draw_button("Quitter",  w // 2 + 130, btn_y)
+        replay_rect = self._draw_button("Rejouer", w // 2 - 130, btn_y, selected=(self._selected == 0))
+        quit_rect   = self._draw_button("Quitter", w // 2 + 130, btn_y, selected=(self._selected == 1))
         self.buttons = {"replay": replay_rect, "quit": quit_rect}
 
         pygame.display.flip()
 
     def run(self) -> str:
+        # Ask for names and save before showing the results screen
+        self._ask_names_and_save()
+
+        # Then show results until the player chooses to replay or quit
         while self.running:
             self.handle_events()
             self.draw()
+
         return self.result

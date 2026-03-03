@@ -12,18 +12,22 @@ from core.enums import MenuButton
 def main():
     pygame.init()
 
-    result = Menu().run()
+    while True:
+        result = Menu().run()
 
-    if result == MenuButton.JOUER:
-        mode = PlayerSelectScreen().run()
-        if mode == PlayerSelectScreen.TWO_PLAYERS:
-            Game().run()
-        elif mode == PlayerSelectScreen.P1_VS_BOT:
-            Game(bot_right=True).run()
-        elif mode == PlayerSelectScreen.BOT_VS_P2:
-            Game(bot_left=True).run()
-    elif result == MenuButton.SCORE:
-        pass  # TODO: leaderboard screen
+        if result == MenuButton.JOUER:
+            mode = PlayerSelectScreen().run()
+            if mode == PlayerSelectScreen.TWO_PLAYERS:
+                Game().run()
+            elif mode == PlayerSelectScreen.P1_VS_BOT:
+                Game(bot_right=True).run()
+            elif mode == PlayerSelectScreen.BOT_VS_P2:
+                Game(bot_left=True).run()
+        elif result == MenuButton.SCORE:
+            from game.scoreboard_screen import ScoreboardScreen
+            ScoreboardScreen().run()
+        else:
+            break
 
     pygame.quit()
     sys.exit()

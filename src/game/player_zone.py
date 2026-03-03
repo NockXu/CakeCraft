@@ -8,7 +8,7 @@ from core.constants import (
     MAP_COMPTOIR_HEIGHT, MAP_COMPTOIR_COLOR,
     PLAYER_SIZE, PLAYER_1_COLOR, PLAYER_2_COLOR,
     CUSTOMER_SIZE, CUSTOMER_MAX_COUNT,
-    PLAYER_1_KEYS, PLAYER_2_KEYS,
+    PLAYER_1_KEYS, PLAYER_2_KEYS, PLAYER_1_INTERACT, PLAYER_2_INTERACT,
     FONT_TITLE_PATH, FONT_BODY_PATH,
     MAX_FAILED_CUSTOMERS,
 )
@@ -147,6 +147,7 @@ class PlayerZone:
         kl = self.kitchen_rect.left
         kr = self.kitchen_rect.right
         is_right = self.side == Side.RIGHT
+        interact = PLAYER_2_INTERACT if is_right else PLAYER_1_INTERACT
 
         # 8 ingredient Creators in 2 rows of 4
         self._creators = []
@@ -158,31 +159,32 @@ class PlayerZone:
             else:
                 cx = kl + 80 + col * 105
             cy = 90 + row * 100
-            c = Creator(Position(cx, cy), 50, ingr, self.player)
+            c = Creator(Position(cx, cy), 50, ingr, self.player, activate_key=interact)
             self._creators.append(c)
             self.interactables.append(c)
 
         # Workbench
         wb_x = kr - 200 if is_right else kl + 200
-        wb = Workbench(Position(wb_x, 330), 90, self.player)
+        wb = Workbench(Position(wb_x, 330), 90, self.player, activate_key=interact)
         self.workbench = wb
         self.interactables.append(wb)
 
         # Deletor
         del_x = kr - 380 if is_right else kl + 380
+        key_label = "E" if is_right else "3"
         self.interactables.append(
-            Deletor(Position(del_x, 330), 50, "Poubelle (F)", pygame.K_f, self.player)
+            Deletor(Position(del_x, 330), 50, f"Poubelle ({key_label})", interact, self.player)
         )
 
         # Hoven (four pour cuire les gâteaux)
         hoven_x = kr - 490 if is_right else kl + 490
-        hoven   = Hoven(Position(hoven_x, 430), 50, "Four (F)", pygame.K_f, self.player)
+        hoven   = Hoven(Position(hoven_x, 430), 50, f"Four ({key_label})", interact, self.player)
         hoven.score_ref = lambda: self.score
         self.interactables.append(hoven)
 
         # Counter (delivery) — bottom of kitchen, centered on customer path
         counter_y = self.kitchen_rect.bottom - 50
-        ctr = Counter(Position(self._path_cx, counter_y), 70, self.player)
+        ctr = Counter(Position(self._path_cx, counter_y), 70, self.player, activate_key=interact)
         ctr.on_delivery = self._handle_delivery
         self.counter = ctr
         self.interactables.append(ctr)
@@ -266,10 +268,14 @@ class PlayerZone:
             self.workbench.current_recipe = waiting.recipe if waiting else None
 
         # Update customers, count failures
+        already_lost = self.has_lost()
         for customer in self._customers:
             prev_state = customer.state
+            # Once the zone has lost, stop patience countdown — send remaining customers away
+            if already_lost and customer.state == CustomerState.WAITING:
+                customer.state = CustomerState.LEAVING
             customer.update(dt)
-            if prev_state == CustomerState.WAITING and customer.state == CustomerState.LEAVING:
+            if not already_lost and prev_state == CustomerState.WAITING and customer.state == CustomerState.LEAVING:
                 self._failed_count += 1
 
         self._customers = [c for c in self._customers if not c.is_done]

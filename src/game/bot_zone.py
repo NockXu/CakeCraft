@@ -1,7 +1,7 @@
 import pygame
 from game.player_zone import PlayerZone
 from core.enums import Side, Ingredient
-from core.constants import PLAYER_SPEED
+from core.constants import PLAYER_SPEED, PLAYER_1_INTERACT, PLAYER_2_INTERACT
 from entity.item.ingredient_item import IngredientItem
 from entity.item.cake_item import CakeItem
 
@@ -153,9 +153,10 @@ class BotZone(PlayerZone):
         )
 
     def _bot_press_f(self):
+        interact_key = PLAYER_2_INTERACT if self.side == Side.RIGHT else PLAYER_1_INTERACT
         for interactable in self.interactables:
             if hasattr(interactable, "handle_keydown"):
-                interactable.handle_keydown(pygame.K_f)
+                interactable.handle_keydown(interact_key)
         self._bot_cooldown = 0.15
 
     # ── Override — ignore human input, run bot instead ────────────────────────

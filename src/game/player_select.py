@@ -9,30 +9,47 @@ from core.constants import (
 )
 
 
+_PS_ORDER = ["two_players", "p1_vs_bot", "bot_vs_p2"]
+_PS_LABELS = {
+    "two_players": "2 Joueurs",
+    "p1_vs_bot":   "Joueur 1 + IA",
+    "bot_vs_p2":   "IA + Joueur 2",
+}
+
+_KEY_UP      = pygame.K_UP
+_KEY_DOWN    = pygame.K_DOWN
+_KEY_CONFIRM  = pygame.K_1
+_KEY_CONFIRM2 = pygame.K_RETURN
+
+
 class PlayerSelectScreen:
     """Screen shown after clicking Play — lets the user choose who controls each side."""
 
-    # Returned values
     TWO_PLAYERS  = "two_players"
     P1_VS_BOT    = "p1_vs_bot"
     BOT_VS_P2    = "bot_vs_p2"
 
     def __init__(self):
-        self.screen  = Screen().screen
-        self.running = True
-        self.result  = None
-        self.buttons = {}
+        self.screen    = Screen().screen
+        self.running   = True
+        self.result    = None
+        self.buttons   = {}
+        self._selected = 0
 
     def _draw_button(self, label: str, key: str, x: int, y: int):
         rect = pygame.Rect(x, y, MENU_BTN_WIDTH, MENU_BTN_HEIGHT)
         self.buttons[key] = rect
-        is_hovered = rect.collidepoint(pygame.mouse.get_pos())
+        is_hovered  = rect.collidepoint(pygame.mouse.get_pos())
+        is_selected = _PS_ORDER[self._selected] == key
 
         shadow = rect.move(MENU_BTN_SHADOW_OFFSET, MENU_BTN_SHADOW_OFFSET)
         pygame.draw.rect(self.screen, MENU_BTN_SHADOW_COLOR, shadow, border_radius=MENU_BTN_BORDER_RADIUS)
 
-        color = MENU_BTN_HOVER_COLOR if is_hovered else MENU_BTN_COLOR
+        color = MENU_BTN_HOVER_COLOR if (is_hovered or is_selected) else MENU_BTN_COLOR
         pygame.draw.rect(self.screen, color, rect, border_radius=MENU_BTN_BORDER_RADIUS)
+
+        if is_selected:
+            pygame.draw.rect(self.screen, (255, 200, 50), rect, 3, border_radius=MENU_BTN_BORDER_RADIUS)
 
         font = pygame.font.SysFont(None, MENU_BTN_FONT_SIZE)
         surf = font.render(label, True, MENU_BTN_TEXT_COLOR)
@@ -48,9 +65,8 @@ class PlayerSelectScreen:
         title = font_title.render("Choisir les joueurs", True, MENU_TITLE_COLOR)
         self.screen.blit(title, title.get_rect(center=(cx, base_y - 80)))
 
-        self._draw_button("2 Joueurs",       self.TWO_PLAYERS, btn_x, base_y)
-        self._draw_button("Joueur 1 + IA",   self.P1_VS_BOT,   btn_x, base_y + MENU_BTN_SPACING)
-        self._draw_button("IA + Joueur 2",   self.BOT_VS_P2,   btn_x, base_y + MENU_BTN_SPACING * 2)
+        for i, key in enumerate(_PS_ORDER):
+            self._draw_button(_PS_LABELS[key], key, btn_x, base_y + MENU_BTN_SPACING * i)
 
         pygame.display.flip()
 
@@ -58,8 +74,16 @@ class PlayerSelectScreen:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_ESCAPE, pygame.K_6):
+                    self.running = False
+                elif event.key == _KEY_UP:
+                    self._selected = (self._selected - 1) % len(_PS_ORDER)
+                elif event.key == _KEY_DOWN:
+                    self._selected = (self._selected + 1) % len(_PS_ORDER)
+                elif event.key in (_KEY_CONFIRM, _KEY_CONFIRM2):
+                    self.result  = _PS_ORDER[self._selected]
+                    self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 for key, rect in self.buttons.items():
                     if rect.collidepoint(event.pos):
