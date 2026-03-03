@@ -7,3 +7,4 @@ class Recipe:
     ingredients: tuple  # tuple[Ingredient, ...]
     reward:      int
     time_limit:  float
+    weight:      int = 10  # relative spawn probability (higher = more common)

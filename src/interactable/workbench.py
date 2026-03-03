@@ -27,9 +27,8 @@ class Workbench(Interactable):
 
     def __init__(self, position: Position, collision_size: int, player,
                  activate_key: int = pygame.K_f):
-        key_label = "E" if activate_key == pygame.K_e else "3"
         super().__init__(position, collision_size=collision_size,
-                         text=f"Déposer / Récupérer ({key_label})", activate_keys=activate_key)
+                         text="Déposer / Récupérer", activate_keys=activate_key)
         self.player          = player
         self.activate_key    = activate_key
         self.current_recipe  = None     # set by PlayerZone each frame

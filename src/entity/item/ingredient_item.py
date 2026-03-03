@@ -2,6 +2,7 @@ import pygame
 from entity.item.item import Item
 from core.position import Position
 from core.enums import Ingredient
+from core.constants import _asset
 
 # (background, text) colors per ingredient
 _COLORS = {
@@ -15,7 +16,32 @@ _COLORS = {
     Ingredient.VANILLA:    ((198, 178, 228), (78,  50,  110)),
 }
 
-_font = None
+_SPRITE_FILES = {
+    Ingredient.FLOUR:      'flour.png',
+    Ingredient.EGG:        'egg.png',
+    Ingredient.BUTTER:     'butter.png',
+    Ingredient.SUGAR:      'sugar.png',
+    Ingredient.CREAM:      'cream.png',
+    Ingredient.CHOCOLATE:  'chocolate.png',
+    Ingredient.STRAWBERRY: 'strawberrie.png',
+    Ingredient.VANILLA:    'vanille.png',
+}
+
+_sprite_cache: dict[Ingredient, pygame.Surface | None] = {}
+
+
+def get_ingredient_sprite(ingredient: Ingredient, size: int) -> pygame.Surface | None:
+    key = (ingredient, size)
+    if key not in _sprite_cache:
+        fname = _SPRITE_FILES.get(ingredient)
+        try:
+            surf = pygame.image.load(_asset('sprites', 'ingredients', fname)).convert_alpha()
+            surf = pygame.transform.smoothscale(surf, (size, size))
+        except Exception:
+            surf = None
+        _sprite_cache[key] = surf
+    return _sprite_cache[key]
+
 
 class IngredientItem(Item):
     def __init__(self, position: Position, ingredient_type: Ingredient):
@@ -24,16 +50,11 @@ class IngredientItem(Item):
         self.ingredient_type = ingredient_type
 
     def _render(self, screen: pygame.Surface, cx: int, cy: int):
-        global _font
-        if _font is None:
-            _font = pygame.font.Font(None, 16)
-
-        bg, fg = _COLORS.get(self.ingredient_type, ((200, 200, 200), (0, 0, 0)))
-        rect = pygame.Rect(cx - self.size // 2, cy - self.size // 2, self.size, self.size)
-        pygame.draw.rect(screen, bg, rect, border_radius=6)
-        pygame.draw.rect(screen, fg, rect, 2, border_radius=6)
-
-        # Abbreviated label (first 2 chars)
-        abbr = self.ingredient_type.value[:2].upper()
-        label = _font.render(abbr, True, fg)
-        screen.blit(label, label.get_rect(center=(cx, cy)))
+        sprite = get_ingredient_sprite(self.ingredient_type, self.size)
+        if sprite:
+            screen.blit(sprite, sprite.get_rect(center=(cx, cy)))
+        else:
+            bg, fg = _COLORS.get(self.ingredient_type, ((200, 200, 200), (0, 0, 0)))
+            rect = pygame.Rect(cx - self.size // 2, cy - self.size // 2, self.size, self.size)
+            pygame.draw.rect(screen, bg, rect, border_radius=6)
+            pygame.draw.rect(screen, fg, rect, 2, border_radius=6)

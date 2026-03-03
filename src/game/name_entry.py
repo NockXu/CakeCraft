@@ -24,6 +24,50 @@ _J2_DOWN    = pygame.K_l
 _J2_CONFIRM = pygame.K_e
 _J2_SUBMIT  = pygame.K_q
 
+_BTN_H = 20  # button image height in hint rows
+
+
+def _btn(key: int) -> pygame.Surface | None:
+    from hud.buttons import get_button_image
+    img = get_button_image(key)
+    if img is None:
+        return None
+    return pygame.transform.smoothscale(img, (_BTN_H, _BTN_H))
+
+
+def _draw_hint_row(screen: pygame.Surface, font: pygame.font.Font,
+                   segments: list, cx: int, cy: int, default_color: tuple):
+    """Draw a mixed text/image hint row centred at (cx, cy).
+
+    segments: list of (str | pygame.Surface, color_or_None)
+              - str  → rendered as text with the given color (or default_color)
+              - Surface → blitted as-is (color ignored)
+    """
+    parts = []
+    total_w = 0
+    h = _BTN_H
+    gap = 4
+
+    for seg, color in segments:
+        if isinstance(seg, pygame.Surface):
+            parts.append(seg)
+            total_w += seg.get_width() + gap
+            h = max(h, seg.get_height())
+        else:
+            surf = font.render(seg, True, color if color else default_color)
+            parts.append(surf)
+            total_w += surf.get_width() + gap
+            h = max(h, surf.get_height())
+
+    total_w -= gap  # remove trailing gap
+
+    x = cx - total_w // 2
+    y = cy - h // 2
+    for part in parts:
+        ph = part.get_height()
+        screen.blit(part, (x, y + (h - ph) // 2))
+        x += part.get_width() + gap
+
 
 class _PlayerPicker:
     """State for one player's 3-letter picker."""
@@ -63,12 +107,10 @@ class _PlayerPicker:
 def _draw_picker(screen, picker: _PlayerPicker, cx: int, top_y: int,
                  font_big, font_small, label: str, color_label, done_color):
     """Draw one player's picker centered at cx, starting at top_y."""
-    # Label (e.g. "Joueur 1")
     lbl = font_small.render(label, True, color_label)
     screen.blit(lbl, lbl.get_rect(centerx=cx, top=top_y))
 
     if picker.done and not picker.skipped:
-        # Show validated name in green
         name = "".join(_ALPHABET[i] for i in picker.letters)
         surf = font_big.render(name, True, done_color)
         screen.blit(surf, surf.get_rect(centerx=cx, top=top_y + 34))
@@ -116,10 +158,12 @@ class NameEntry:
 
         if player_index == 0:
             self._picker = _PlayerPicker(_J1_UP, _J1_DOWN, _J1_CONFIRM, _J1_SUBMIT)
-            self._hint   = "Haut/Bas: changer  |  [3]: confirmer lettre  |  [4]: valider"
+            self._confirm_key = _J1_CONFIRM
+            self._submit_key  = _J1_SUBMIT
         else:
             self._picker = _PlayerPicker(_J2_UP, _J2_DOWN, _J2_CONFIRM, _J2_SUBMIT)
-            self._hint   = "O/L: changer  |  [E]: confirmer lettre  |  [Q]: valider"
+            self._confirm_key = _J2_CONFIRM
+            self._submit_key  = _J2_SUBMIT
 
     def _draw(self):
         w, h = self.screen.get_size()
@@ -128,8 +172,16 @@ class NameEntry:
         surf = self._font_mid.render(self.prompt, True, _GOLD)
         self.screen.blit(surf, surf.get_rect(centerx=w // 2, top=h // 2 - 180))
 
-        hint_surf = self._font_small.render(self._hint, True, _GREY)
-        self.screen.blit(hint_surf, hint_surf.get_rect(centerx=w // 2, top=h // 2 - 130))
+        # Hint row: [btn_confirm] lettre suiv.  [btn_submit] valider
+        btn_confirm = _btn(self._confirm_key)
+        btn_submit  = _btn(self._submit_key)
+        segs = []
+        if btn_confirm:
+            segs += [(btn_confirm, None), (": lettre suivante  ", _GREY)]
+        if btn_submit:
+            segs += [(btn_submit,  None), (": valider", _GREY)]
+        if segs:
+            _draw_hint_row(self.screen, self._font_small, segs, w // 2, h // 2 - 130, _GREY)
 
         skip_surf = self._font_small.render("ECHAP / [6]: passer (score non sauvegarde)", True, _RED)
         self.screen.blit(skip_surf, skip_surf.get_rect(centerx=w // 2, top=h // 2 - 104))
@@ -170,13 +222,24 @@ class NameEntryDuo:
         title = self._font_mid.render("Entrez vos noms !", True, _GOLD)
         self.screen.blit(title, title.get_rect(centerx=w // 2, top=30))
 
-        # Hints
-        h1 = self._font_small.render("J1 — Haut/Bas: changer  [3]: lettre suivante  [4]: valider", True, _GREY)
-        h2 = self._font_small.render("J2 — O/L: changer  [E]: lettre suivante  [Q]: valider", True, _GREY)
+        # J1 hint row
+        b3 = _btn(_J1_CONFIRM)
+        b4 = _btn(_J1_SUBMIT)
+        segs1 = [("J1 — ", _GOLD)]
+        if b3: segs1 += [(b3, None), (": lettre suiv.  ", _GREY)]
+        if b4: segs1 += [(b4, None), (": valider", _GREY)]
+        _draw_hint_row(self.screen, self._font_small, segs1, w // 2, 84, _GREY)
+
+        # J2 hint row
+        re3 = _btn(_J2_CONFIRM)
+        re4 = _btn(_J2_SUBMIT)
+        segs2 = [("J2 — ", (100, 160, 255))]
+        if re3: segs2 += [(re3, None), (": lettre suiv.  ", _GREY)]
+        if re4: segs2 += [(re4, None), (": valider", _GREY)]
+        _draw_hint_row(self.screen, self._font_small, segs2, w // 2, 108, _GREY)
+
         skip = self._font_small.render("ECHAP / [6]: passer (score non sauvegarde)", True, _RED)
-        self.screen.blit(h1,   h1.get_rect(centerx=w // 2, top=76))
-        self.screen.blit(h2,   h2.get_rect(centerx=w // 2, top=100))
-        self.screen.blit(skip, skip.get_rect(centerx=w // 2, top=124))
+        self.screen.blit(skip, skip.get_rect(centerx=w // 2, top=132))
 
         cx1 = w // 4
         cx2 = 3 * w // 4
@@ -187,7 +250,6 @@ class NameEntryDuo:
         _draw_picker(self.screen, self._p2, cx2, top,
                      self._font_big, self._font_small, "Joueur 2", (100, 160, 255), _GREEN)
 
-        # Separator
         pygame.draw.line(self.screen, _GREY, (w // 2, 160), (w // 2, h - 60), 1)
 
         pygame.display.flip()

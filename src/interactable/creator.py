@@ -9,11 +9,9 @@ class Creator(Interactable):
 
     def __init__(self, position: Position, collision_size: int,
                  ingredient_type: Ingredient, player, activate_key: int = pygame.K_f):
-        import pygame as _pg
         label = ingredient_type.value
-        key_label = "E" if activate_key == _pg.K_e else "3"
         super().__init__(position, collision_size=collision_size,
-                         text=f"Prendre {label} ({key_label})", activate_keys=activate_key)
+                         text=f"Prendre {label}", activate_keys=activate_key)
         self.ingredient_type = ingredient_type
         self.player          = player
         self.activate_key    = activate_key
@@ -27,15 +25,21 @@ class Creator(Interactable):
         return False
 
     def draw(self, screen: pygame.Surface):
+        from entity.item.ingredient_item import get_ingredient_sprite
         bg, fg = _ING_COLORS.get(self.ingredient_type, ((200, 200, 200), (0, 0, 0)))
         rect = self.get_collision_rect()
         pygame.draw.rect(screen, bg, rect, border_radius=8)
         pygame.draw.rect(screen, fg, rect, 2, border_radius=8)
 
-        font = pygame.font.Font(None, 18)
-        label = font.render(self.ingredient_type.value, True, fg)
-        screen.blit(label, label.get_rect(center=rect.center))
-        self.draw_help(screen, (30, 30, 30))  # Use consistent dark gray for help text
+        sprite = get_ingredient_sprite(self.ingredient_type, rect.width - 8)
+        if sprite:
+            screen.blit(sprite, sprite.get_rect(center=rect.center))
+        else:
+            font = pygame.font.Font(None, 18)
+            label = font.render(self.ingredient_type.value, True, fg)
+            screen.blit(label, label.get_rect(center=rect.center))
+
+        self.draw_help(screen)
 
     def handle_keydown(self, key):
         if key == self.activate_key:

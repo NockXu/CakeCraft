@@ -3,7 +3,21 @@ from interactable.holder import Holder
 from entity.item.cake_item import CakeItem
 from core.position import Position
 from core.enums import CakeType
+from core.constants import _asset
 from hud.bubble import ProgressBubble
+
+_sprite_idle = None
+
+def _load_sprites():
+    global _sprite_idle
+    if _sprite_idle is not None:
+        return
+    try:
+        _sprite_idle = pygame.image.load(_asset('sprites', 'furnitures', 'furnace', 'f_idle.png')).convert_alpha()
+    except Exception:
+        _sprite_idle = None
+
+_SPIN_SPEED = 120  # degrees per second
 
 class Hoven(Holder):
     """Four — hérite du Holder et ajoute la cuisson des CakeItem"""
@@ -15,8 +29,9 @@ class Hoven(Holder):
         self.score_ref     = None  # set to a callable returning the player's score
         self.is_cooking    = False
         self.cooking_progress = 0.0
-        self.burned_recently = False  # Indicateur visuel pour gâteau brûlé
-        self.burned_timer = 0.0
+        self.burned_recently = False
+        self.burned_timer    = 0.0
+        self._spin_angle     = 0.0
         
         # Créer la bulle de progression pour la cuisson
         bubble_width = collision_size
@@ -35,7 +50,7 @@ class Hoven(Holder):
                 self.held_item = self.player.remove_item()
                 self.held_item.position = Position(self.position.x, self.position.y)
                 self.is_cooking = True
-                self.cooking_progress = self.held_item.cooked  # Reprendre la cuisson existante
+                self.cooking_progress = self.held_item.cooked
                 return True
             else:
                 # Pour les autres items, comportement normal du Holder
@@ -47,6 +62,9 @@ class Hoven(Holder):
         if self.score_ref is not None:
             bonus = (self.score_ref() // 100) * 0.01
             self.cooking_speed = min(0.25, 0.1 + bonus)
+
+        if self.is_cooking:
+            self._spin_angle = (self._spin_angle + _SPIN_SPEED * dt) % 360
 
         if self.is_cooking and self.held_item and isinstance(self.held_item, CakeItem):
             self.held_item.cooked += self.cooking_speed * dt
@@ -66,26 +84,31 @@ class Hoven(Holder):
 
     def draw(self, screen: pygame.Surface):
         """Override pour afficher le four et la progression de cuisson"""
-        # Couleur fixe pour le four (marron)
-        color = (140, 100, 60)   # Marron normal
-
+        _load_sprites()
         rect = self.get_collision_rect()
-        pygame.draw.rect(screen, color, rect, border_radius=6)
-        pygame.draw.rect(screen, (80, 50, 20), rect, 2, border_radius=6)
 
-        # Afficher "Four"
-        font = pygame.font.Font(None, 18)
-        label = font.render("Four", True, (255, 240, 220))
-        screen.blit(label, label.get_rect(center=rect.center))
+        if _sprite_idle:
+            scaled = pygame.transform.smoothscale(_sprite_idle, (rect.width, rect.height))
+            if self.is_cooking:
+                scaled = pygame.transform.rotate(scaled, -self._spin_angle)
+                screen.blit(scaled, scaled.get_rect(center=rect.center))
+            else:
+                screen.blit(scaled, rect)
+        else:
+            color = (180, 80, 20) if self.is_cooking else (140, 100, 60)
+            pygame.draw.rect(screen, color, rect, border_radius=6)
+            pygame.draw.rect(screen, (80, 50, 20), rect, 2, border_radius=6)
+
+        # Cake au centre du four avec effet blanc→couleur→noir
+        if self.is_cooking and self.held_item and isinstance(self.held_item, CakeItem):
+            cake_size = rect.width // 2
+            self.held_item.render_in_oven(screen, rect.centerx, rect.centery, cake_size)
 
         # Bulle de progression si en cours de cuisson
         if self.is_cooking and self.held_item and isinstance(self.held_item, CakeItem):
             self.progress_bubble.draw(screen)
             self.progress_bubble.draw_progress_bar(screen, self.held_item.cooked)
 
-        # Afficher l'item si présent
-        if self.held_item:
-            self.held_item._render(screen, int(self.position.x), int(self.position.y) - self.collision_size // 2 - 18)
 
         self.draw_help(screen)
 

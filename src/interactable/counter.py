@@ -11,14 +11,16 @@ _font = None
 class Counter(Interactable):
     """Comptoir de livraison — le joueur dépose le gâteau ici pour servir le client."""
 
-    def __init__(self, position: Position, collision_size: int, player,
+    def __init__(self, position: Position, player,
+                 collision_w: int = 190, collision_h: int = 40,
                  activate_key: int = pygame.K_f):
-        key_label = "E" if activate_key == pygame.K_e else "3"
-        super().__init__(position, collision_size=collision_size,
-                         text=f"Livrer la commande ({key_label})", activate_keys=activate_key)
+        super().__init__(position, collision_size=max(collision_w, collision_h),
+                         text="Livrer la commande", activate_keys=activate_key)
         self.player       = player
         self.activate_key = activate_key
-        self.on_delivery  = None    # callback(result) set by PlayerZone
+        self.on_delivery  = None
+        self._coll_w      = collision_w
+        self._coll_h      = collision_h
 
         self._flash_timer   = 0.0
         self._flash_success = True
@@ -79,25 +81,36 @@ class Counter(Interactable):
         
         return DeliveryResult.SUCCESS   # zone handles actual serving via callback
 
+    def get_collision_rect(self):
+        return pygame.Rect(
+            self.position.x - self._coll_w // 2,
+            self.position.y - self._coll_h // 2,
+            self._coll_w, self._coll_h,
+        )
+
+    def draw_help(self, screen: pygame.Surface, color: tuple = (30, 30, 30)):
+        if not self.in_range:
+            return
+        from interactable.interactable import _BTN_SIZE
+        btn = self._get_btn_img()
+        if btn is None:
+            return
+        bx = self.position.x - _BTN_SIZE // 2
+        by = self.position.y - self._coll_h // 2 - _BTN_SIZE - 4
+        screen.blit(btn, (bx, by))
+
     def handle_movement(self):
         pass
 
     def draw(self, screen: pygame.Surface):
-        global _font
-        if _font is None:
-            _font = pygame.font.Font(None, 18)
-
         rect = self.get_collision_rect()
 
-        # Flash on delivery attempt
         if self._flash_timer > 0:
             color = (80, 200, 80) if self._flash_success else (200, 60, 60)
         else:
             color = (210, 170, 90)
 
-        pygame.draw.rect(screen, color, rect, border_radius=6)
-        pygame.draw.rect(screen, (100, 70, 20), rect, 2, border_radius=6)
-
-        label = _font.render("Livraison", True, (40, 20, 0))
-        screen.blit(label, label.get_rect(center=rect.center))
+        surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
+        surf.fill((*color, 160))
+        screen.blit(surf, rect.topleft)
         self.draw_help(screen)

@@ -20,10 +20,16 @@ class Ingredient(Enum):
     VANILLA    = "Vanille"
 
 class CakeType(Enum):
-    VANILLA_CAKE    = "Gâteau Vanille"
-    CHOCOLATE_CAKE  = "Gâteau Chocolat"
-    STRAWBERRY_CAKE = "Gâteau Fraise"
-    CREAM_PUFF      = "Chou à la Crème"
+    VANILLA_CAKE       = "Gâteau Vanille"
+    CHOCOLATE_CAKE     = "Gâteau Chocolat"
+    STRAWBERRY_CAKE    = "Gâteau Fraise"
+    CREAM_PUFF         = "Chou à la Crème"
+    CHEWING_GUM_CAKE   = "Gâteau Chewing-Gum"
+    BUTTER_BOMB        = "Bombe au Beurre"
+    EGG_SURPRISE       = "Surprise à l'Oeuf"
+    RAINBOW_MESS       = "Chaos Arc-en-Ciel"
+    CURSED_TART        = "Tarte Maudite"
+    CLOUD_CAKE         = "Gâteau Nuage"
 
 class CustomerState(Enum):
     WALKING  = "walking"

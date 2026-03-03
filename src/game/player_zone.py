@@ -101,6 +101,8 @@ class PlayerZone:
             controls = PLAYER_2_KEYS
             path_x   = x_offset
         self._path_cx = path_x + path_w // 2
+        self._path_x  = path_x
+        self._path_w  = path_w
 
         # Comptoir
         self.comptoir_rect = pygame.Rect(path_x, self._gap_top, path_w, MAP_COMPTOIR_HEIGHT)
@@ -149,42 +151,47 @@ class PlayerZone:
         is_right = self.side == Side.RIGHT
         interact = PLAYER_2_INTERACT if is_right else PLAYER_1_INTERACT
 
-        # 8 ingredient Creators in 2 rows of 4
+        # 8 ingredient Creators in 2 rows of 4, centred horizontally in the kitchen
         self._creators = []
+        cols       = 4
+        creator_sz = 50
+        col_gap    = 105
+        grid_w     = (cols - 1) * col_gap + creator_sz
+        kcx        = (kl + kr) // 2
+        grid_left  = kcx - grid_w // 2 + creator_sz // 2  # x of first column center
         for i, ingr in enumerate(Ingredient):
-            col = i % 4
-            row = i // 4
-            if is_right:
-                cx = kr - 80 - col * 105
-            else:
-                cx = kl + 80 + col * 105
-            cy = 90 + row * 100
-            c = Creator(Position(cx, cy), 50, ingr, self.player, activate_key=interact)
+            col = i % cols
+            row = i // cols
+            cx = grid_left + col * col_gap
+            cy = 80 + row * 100
+            c = Creator(Position(cx, cy), creator_sz, ingr, self.player, activate_key=interact)
             self._creators.append(c)
             self.interactables.append(c)
 
-        # Workbench
-        wb_x = kr - 200 if is_right else kl + 200
-        wb = Workbench(Position(wb_x, 330), 90, self.player, activate_key=interact)
+        # Workbench — centred below the ingredient grid
+        wb_y = 80 + 1 * 100 + 110  # below second row
+        wb = Workbench(Position(kcx, wb_y), 90, self.player, activate_key=interact)
         self.workbench = wb
         self.interactables.append(wb)
 
-        # Deletor
-        del_x = kr - 380 if is_right else kl + 380
-        key_label = "E" if is_right else "3"
+        # Deletor — to the right of the workbench
         self.interactables.append(
-            Deletor(Position(del_x, 330), 50, f"Poubelle ({key_label})", interact, self.player)
+            Deletor(Position(kcx + 90, wb_y), 50, "Poubelle", interact, self.player)
         )
 
-        # Hoven (four pour cuire les gâteaux)
-        hoven_x = kr - 490 if is_right else kl + 490
-        hoven   = Hoven(Position(hoven_x, 430), 50, f"Four ({key_label})", interact, self.player)
+        # Hoven (four pour cuire les gâteaux) — bottom corner of kitchen (mirrored), not touching wall
+        hoven_half = 70  # half of collision_size=140
+        margin     = 10  # gap from walls
+        hoven_x = (kr - hoven_half - margin) if is_right else (kl + hoven_half + margin)
+        hoven_y = self.kitchen_rect.bottom - hoven_half - margin
+        hoven   = Hoven(Position(hoven_x, hoven_y), 140, "Four", interact, self.player)
         hoven.score_ref = lambda: self.score
         self.interactables.append(hoven)
 
-        # Counter (delivery) — bottom of kitchen, centered on customer path
-        counter_y = self.kitchen_rect.bottom - 50
-        ctr = Counter(Position(self._path_cx, counter_y), 70, self.player, activate_key=interact)
+        # Counter (delivery) — small cube centered on customer path, near kitchen bottom
+        counter_y = self.kitchen_rect.bottom - 40
+        ctr = Counter(Position(self._path_cx, counter_y), self.player,
+                      collision_w=190, collision_h=80, activate_key=interact)
         ctr.on_delivery = self._handle_delivery
         self.counter = ctr
         self.interactables.append(ctr)
@@ -197,8 +204,7 @@ class PlayerZone:
         random.shuffle(ingredients)
         for creator, ingr in zip(self._creators, ingredients):
             creator.ingredient_type = ingr
-            creator.text = f"Prendre {ingr.value} (F)"
-            creator.help_bubble = None  # force le recalcul de la bulle
+            creator.text = f"Prendre {ingr.value}"
 
     # ── Delivery callback ──────────────────────────────────────────────────────
 

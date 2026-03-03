@@ -1,6 +1,10 @@
 {
   "solo": [
     {
+      "name": "AAA",
+      "score": 430
+    },
+    {
       "name": "ZZZ",
       "score": 160
     },
@@ -27,10 +31,6 @@
     {
       "name": "XXX",
       "score": 36
-    },
-    {
-      "name": "AAA",
-      "score": 0
     },
     {
       "name": "AAA",
@@ -83,6 +83,13 @@
       "name2": "YAA",
       "score2": 0,
       "total": 36
+    },
+    {
+      "name1": "AAA",
+      "score1": 430,
+      "name2": "AAA",
+      "score2": 0,
+      "total": 430
     }
   ]
 }
