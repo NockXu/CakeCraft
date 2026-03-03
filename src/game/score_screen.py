@@ -44,6 +44,7 @@ class ScoreScreen:
         self.result          = None
         self.running         = True
         self.buttons         = {}
+        self._selected       = 0  # 0 = Rejouer, 1 = Quitter
 
     @staticmethod
     def _fmt_time(seconds: float) -> str:
@@ -99,22 +100,30 @@ class ScoreScreen:
                 sb.add_solo(name, self.score_right)
 
     def handle_events(self):
+        _ORDER = ["replay", "quit"]
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
-            elif event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_6):
-                self.result = "quit"; self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_ESCAPE, pygame.K_6):
+                    self.result = "quit"; self.running = False
+                elif event.key in (pygame.K_LEFT, pygame.K_RIGHT):
+                    self._selected = 1 - self._selected
+                elif event.key in (pygame.K_1, pygame.K_RETURN):
+                    self.result = _ORDER[self._selected]; self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 for name, rect in self.buttons.items():
                     if rect.collidepoint(event.pos):
                         self.result = name; self.running = False
 
-    def _draw_button(self, text: str, cx: int, cy: int) -> pygame.Rect:
+    def _draw_button(self, text: str, cx: int, cy: int, selected: bool = False) -> pygame.Rect:
         font  = _font_small
         label = font.render(text, True, _DARK_BG)
         rect  = label.get_rect(center=(cx, cy))
         pad   = pygame.Rect(rect.left - 24, rect.top - 12, rect.width + 48, rect.height + 24)
         pygame.draw.rect(self.screen, _GOLD, pad, border_radius=14)
+        if selected:
+            pygame.draw.rect(self.screen, (255, 255, 255), pad, 3, border_radius=14)
         self.screen.blit(label, rect)
         return pad
 
@@ -155,8 +164,8 @@ class ScoreScreen:
             self.screen.blit(survived, survived.get_rect(centerx=cx, top=col_y + 105))
 
         btn_y = h - 100
-        replay_rect = self._draw_button("Rejouer",  w // 2 - 130, btn_y)
-        quit_rect   = self._draw_button("Quitter",  w // 2 + 130, btn_y)
+        replay_rect = self._draw_button("Rejouer", w // 2 - 130, btn_y, selected=(self._selected == 0))
+        quit_rect   = self._draw_button("Quitter", w // 2 + 130, btn_y, selected=(self._selected == 1))
         self.buttons = {"replay": replay_rect, "quit": quit_rect}
 
         pygame.display.flip()

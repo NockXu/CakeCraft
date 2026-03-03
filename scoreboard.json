@@ -6,6 +6,10 @@
     },
     {
       "name": "ZZZ",
+      "score": 135
+    },
+    {
+      "name": "ZZZ",
       "score": 120
     },
     {
@@ -21,8 +25,8 @@
       "score": 80
     },
     {
-      "name": "AAA",
-      "score": 0
+      "name": "XXX",
+      "score": 36
     },
     {
       "name": "AAA",
@@ -65,6 +69,20 @@
       "name2": "ZZZ",
       "score2": 160,
       "total": 160
+    },
+    {
+      "name1": "ZZZ",
+      "score1": 135,
+      "name2": "UAA",
+      "score2": 0,
+      "total": 135
+    },
+    {
+      "name1": "XXX",
+      "score1": 36,
+      "name2": "YAA",
+      "score2": 0,
+      "total": 36
     }
   ]
 }

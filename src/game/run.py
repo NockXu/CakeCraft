@@ -22,42 +22,55 @@ class Game:
         return TIME_FAST_FORWARD_SCALE if keys[pygame.K_TAB] else 1.0
 
     def run(self):
-        self._spectating   = False  # human lost but is watching the bot
-        self._human_died   = False  # human lost (quit or spectate)
+        while True:
+            self._spectating = False
+            self._human_died = False
+            self.running     = True
 
-        while self.running:
-            dt = self.clock.tick(FPS) / 1000.0 * self._time_scale()
+            while self.running:
+                dt = self.clock.tick(FPS) / 1000.0 * self._time_scale()
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.running = False
-                elif event.type == pygame.KEYDOWN:
-                    if event.key in (pygame.K_ESCAPE, pygame.K_6):
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
                         self.running = False
-                    elif not self._spectating:
-                        self.eventHandler.handle_keydown(event.key)
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key in (pygame.K_ESCAPE, pygame.K_6):
+                            self.running = False
+                        elif not self._spectating:
+                            self.eventHandler.handle_keydown(event.key)
 
-            if not self._spectating:
-                keys = pygame.key.get_pressed()
-                self.eventHandler.handle_movement(keys)
-                self.eventHandler.handle_events()
+                if not self._spectating:
+                    keys = pygame.key.get_pressed()
+                    self.eventHandler.handle_movement(keys)
+                    self.eventHandler.handle_events()
 
-            self.map.update(dt)
-            self.map.draw()
+                self.map.update(dt)
+                self.map.draw()
 
-            if self.map.game_over:
-                self.running = False
-            elif not self._spectating and not self._human_died and self._human_just_lost():
-                self._human_died = True
-                choice = self._ask_spectate_or_quit()
-                if choice == "quit":
+                if self.map.game_over:
                     self.running = False
-                else:
-                    self._spectating = True
+                elif not self._spectating and not self._human_died and self._human_just_lost():
+                    self._human_died = True
+                    choice = self._ask_spectate_or_quit()
+                    if choice == "quit":
+                        self.running = False
+                    else:
+                        self._spectating = True
 
-        # Show score screen when game ends naturally (not ESC)
-        if self.map.game_over or self._human_died:
-            self._show_score_screen(self._vs_mode, self._bot_left, self._bot_right)
+            # Show score screen when game ends naturally (not ESC)
+            if not (self.map.game_over or self._human_died):
+                break  # ESC pressed — return to menu without score screen
+
+            replay = self._show_score_screen(self._vs_mode, self._bot_left, self._bot_right)
+            if not replay:
+                break
+
+            # Replay: reset map and event handler
+            self.map = Map(bot_left=self._bot_left, bot_right=self._bot_right)
+            self.eventHandler = eventHandler()
+            self.eventHandler.add_thing(self.map.zone_left)
+            self.eventHandler.add_thing(self.map.zone_right)
+            self.clock.tick()  # flush accumulated time so first dt is ~0
 
     def _human_just_lost(self) -> bool:
         """True when the human side has just exhausted all lives (J vs bot only)."""
@@ -110,7 +123,7 @@ class Game:
             pygame.display.flip()
             clock.tick(60)
 
-    def _show_score_screen(self, vs_mode: bool, bot_left: bool, bot_right: bool):
+    def _show_score_screen(self, vs_mode: bool, bot_left: bool, bot_right: bool) -> bool:
         from game.score_screen import ScoreScreen
         result = ScoreScreen(
             score_left      = self.map.zone_left.score,
@@ -121,7 +134,4 @@ class Game:
             bot_left        = bot_left,
             bot_right       = bot_right,
         ).run()
-        if result == "replay":
-            self.map     = Map(bot_left=self._bot_left, bot_right=self._bot_right)
-            self.running = True
-            self.run()
+        return result == "replay"
