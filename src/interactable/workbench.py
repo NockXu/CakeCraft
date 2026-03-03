@@ -4,9 +4,21 @@ from entity.item.ingredient_item import IngredientItem, _COLORS as _ING_COLORS
 from entity.item.cake_item import CakeItem
 from core.position import Position
 from core.enums import Ingredient
+from core.constants import _asset
 
 _font_label = None
 _font_small = None
+
+# Load workbench sprite
+_workbench_sprite = None
+
+def _load_workbench_sprite():
+    global _workbench_sprite
+    if _workbench_sprite is None:
+        try:
+            _workbench_sprite = pygame.image.load(_asset('sprites', 'furnitures', 'workbench', 'w_default.png')).convert_alpha()
+        except Exception:
+            _workbench_sprite = None
 
 
 class Workbench(Interactable):
@@ -24,6 +36,7 @@ class Workbench(Interactable):
         self._deposited      = []       # list of Ingredient deposited so far
         self._deposited_items = []       # list of IngredientItem objects (for recovery)
         self._output_item    = None     # CakeItem ready to pick up
+        self._ingredient_positions = []  # Store random positions for each ingredient
 
     # ------------------------------------------------------------------
     # Public API
@@ -33,6 +46,7 @@ class Workbench(Interactable):
         """Vider le plan de travail (nouveau client ou mauvaise livraison)."""
         self._deposited   = []
         self._deposited_items = []
+        self._ingredient_positions = []  # Reset positions too
         self._output_item = None
 
     def get_deposited(self) -> list:
@@ -65,6 +79,17 @@ class Workbench(Interactable):
             self.player.remove_item()
             self._deposited.append(ingr)
             self._deposited_items.append(ingr_item)  # Store the actual item for recovery
+            
+            # Generate and store random position for this ingredient
+            import random
+            center_x = self.position.x
+            center_y = self.position.y - (self.collision_size // 2) + 15   # Move center up
+            angle = random.uniform(0, 2 * 3.14159)
+            distance = random.uniform(4, 7)
+            pos_x = center_x + int(distance * (angle / 3.14159))
+            pos_y = center_y + int(distance * (angle / 2))
+            self._ingredient_positions.append((pos_x, pos_y))
+            
             # Check if the recipe is complete
             if self.current_recipe and self._is_complete():
                 self._assemble_cake()
@@ -75,12 +100,16 @@ class Workbench(Interactable):
         return have == needed
 
     def _assemble_cake(self):
+        # Use the same center position as ingredients
+        center_x = self.position.x
+        center_y = self.position.y - (self.collision_size // 2) + 15
         self._output_item = CakeItem(
-            Position(self.position.x, self.position.y),
+            Position(center_x, center_y),
             self.current_recipe.cake_type,
         )
         self._deposited = []
         self._deposited_items = []  # Clear deposited items when cake is assembled
+        self._ingredient_positions = []  # Clear positions too
 
     def handle_movement(self):
         pass
@@ -95,34 +124,32 @@ class Workbench(Interactable):
             _font_label = pygame.font.Font(None, 18)
             _font_small = pygame.font.Font(None, 14)
 
+        _load_workbench_sprite()
         rect = self.get_collision_rect()
 
-        # Background
-        bg_color = (140, 85, 30) if self._output_item else (180, 120, 60)
-        pygame.draw.rect(screen, bg_color, rect, border_radius=8)
-        pygame.draw.rect(screen, (80, 45, 10), rect, 2, border_radius=8)
+        # Draw workbench sprite if available, otherwise fallback to rectangle
+        if _workbench_sprite:
+            # Scale sprite to fit collision rect
+            scaled_sprite = pygame.transform.scale(_workbench_sprite, (rect.width, rect.height))
+            screen.blit(scaled_sprite, rect)
+        else:
+            # Fallback to original rectangle drawing
+            bg_color = (140, 85, 30) if self._output_item else (180, 120, 60)
+            pygame.draw.rect(screen, bg_color, rect, border_radius=8)
+            pygame.draw.rect(screen, (80, 45, 10), rect, 2, border_radius=8)
 
-        # Title
-        title = _font_label.render("Plan de travail", True, (255, 235, 200))
-        screen.blit(title, title.get_rect(centerx=rect.centerx, top=rect.top + 4))
-
-        # Deposited ingredients as small colored dots
+        # Deposited ingredients as small colored dots - fixed random positions
         dot_r = 5
-        dot_y = rect.top + 22
-        dot_x = rect.left + 8
-        for ingr in self._deposited:
+        
+        for i, (ingr, (pos_x, pos_y)) in enumerate(zip(self._deposited, self._ingredient_positions)):
             bg, _ = _ING_COLORS.get(ingr, ((200, 200, 200), (0, 0, 0)))
-            pygame.draw.circle(screen, bg, (dot_x + dot_r, dot_y + dot_r), dot_r)
-            pygame.draw.circle(screen, (60, 30, 0), (dot_x + dot_r, dot_y + dot_r), dot_r, 1)
-            dot_x += dot_r * 2 + 4
-            if dot_x + dot_r * 2 > rect.right - 4:
-                dot_x  = rect.left + 8
-                dot_y += dot_r * 2 + 4
+            pygame.draw.circle(screen, bg, (pos_x, pos_y), dot_r)
+            pygame.draw.circle(screen, (60, 30, 0), (pos_x, pos_y), dot_r, 1)
 
         # Output cake ready indicator
         if self._output_item:
             ready_label = _font_label.render("Gâteau prêt !", True, (255, 255, 100))
             screen.blit(ready_label, ready_label.get_rect(centerx=rect.centerx, bottom=rect.bottom - 4))
-            self._output_item._render(screen, rect.centerx, rect.centery + 8)
+            self._output_item._render(screen, int(self._output_item.position.x), int(self._output_item.position.y))
 
         self.draw_help(screen)
