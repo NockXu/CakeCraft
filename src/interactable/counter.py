@@ -13,8 +13,9 @@ class Counter(Interactable):
 
     def __init__(self, position: Position, collision_size: int, player,
                  activate_key: int = pygame.K_f):
+        key_label = "E" if activate_key == pygame.K_e else "3"
         super().__init__(position, collision_size=collision_size,
-                         text="Livrer la commande (F)", activate_keys=activate_key)
+                         text=f"Livrer la commande ({key_label})", activate_keys=activate_key)
         self.player       = player
         self.activate_key = activate_key
         self.on_delivery  = None    # callback(result) set by PlayerZone

@@ -9,9 +9,11 @@ class Creator(Interactable):
 
     def __init__(self, position: Position, collision_size: int,
                  ingredient_type: Ingredient, player, activate_key: int = pygame.K_f):
+        import pygame as _pg
         label = ingredient_type.value
+        key_label = "E" if activate_key == _pg.K_e else "3"
         super().__init__(position, collision_size=collision_size,
-                         text=f"Prendre {label} (F)", activate_keys=activate_key)
+                         text=f"Prendre {label} ({key_label})", activate_keys=activate_key)
         self.ingredient_type = ingredient_type
         self.player          = player
         self.activate_key    = activate_key

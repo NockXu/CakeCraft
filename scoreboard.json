@@ -1,0 +1,70 @@
+{
+  "solo": [
+    {
+      "name": "ZZZ",
+      "score": 160
+    },
+    {
+      "name": "ZZZ",
+      "score": 120
+    },
+    {
+      "name": "ZAZ",
+      "score": 120
+    },
+    {
+      "name": "BBB",
+      "score": 80
+    },
+    {
+      "name": "AZZ",
+      "score": 80
+    },
+    {
+      "name": "AAA",
+      "score": 0
+    },
+    {
+      "name": "AAA",
+      "score": 0
+    },
+    {
+      "name": "AAA",
+      "score": 0
+    },
+    {
+      "name": "AAA",
+      "score": 0
+    }
+  ],
+  "vs": [
+    {
+      "name1": "AAA",
+      "score1": 0,
+      "name2": "ZZZ",
+      "score2": 120,
+      "total": 120
+    },
+    {
+      "name1": "AAA",
+      "score1": 0,
+      "name2": "BBB",
+      "score2": 80,
+      "total": 80
+    },
+    {
+      "name1": "AAA",
+      "score1": 0,
+      "name2": "AZZ",
+      "score2": 80,
+      "total": 80
+    },
+    {
+      "name1": "AAA",
+      "score1": 0,
+      "name2": "ZZZ",
+      "score2": 160,
+      "total": 160
+    }
+  ]
+}
