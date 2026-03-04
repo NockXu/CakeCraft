@@ -1,3 +1,4 @@
+#!/usr/bin/env python3.11
 import pygame
 import sys
 import os
