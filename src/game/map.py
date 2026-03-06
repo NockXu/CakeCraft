@@ -4,10 +4,38 @@ from core.constants import (
     MAP_BG_COLOR, MAP_SEPARATOR_COLOR, MAP_SEPARATOR_WIDTH, MAP_KITCHEN_RATIO,
     CUSTOMER_SPAWN_INTERVAL, CUSTOMER_MAX_COUNT,
     DIFFICULTY_SPEED, MIN_PATIENCE_RATIO, MIN_SPAWN_INTERVAL,
+    _asset,
 )
 from game.player_zone import PlayerZone
 from core.enums import Side
 from recipe.catalog import RecipeCatalog
+
+_floor_kitchen: pygame.Surface | None = None
+_floor_outside: pygame.Surface | None = None
+_tile_cache: dict = {}
+
+
+def _load_floor_tiles():
+    global _floor_kitchen, _floor_outside
+    if _floor_kitchen is not None:
+        return
+    try:
+        raw = pygame.image.load(_asset('floor_texture.JPG')).convert()
+        tw, th = raw.get_size()
+        _floor_kitchen = pygame.transform.scale(raw, (tw // 3, th // 3))
+    except Exception:
+        _floor_kitchen = None
+    try:
+        _floor_outside = pygame.image.load(_asset('oldstone.png')).convert()
+    except Exception:
+        _floor_outside = None
+
+
+def _tile(screen: pygame.Surface, tile: pygame.Surface, rect: pygame.Rect):
+    tw, th = tile.get_size()
+    for y in range(rect.top, rect.bottom, th):
+        for x in range(rect.left, rect.right, tw):
+            screen.blit(tile, (x, y))
 
 
 class Map:
@@ -29,18 +57,33 @@ class Map:
         self.game_over    = False
 
     def draw(self):
-        self.screen.fill(MAP_BG_COLOR)
+        _load_floor_tiles()
+        w, h = self.screen.get_width(), self.screen.get_height()
+        kitchen_y = int(h * MAP_KITCHEN_RATIO)
+
+        # Kitchen floor (top half)
+        kitchen_rect = pygame.Rect(0, 0, w, kitchen_y)
+        if _floor_kitchen:
+            _tile(self.screen, _floor_kitchen, kitchen_rect)
+        else:
+            pygame.draw.rect(self.screen, MAP_BG_COLOR, kitchen_rect)
+
+        # Outside floor (bottom half — customer area)
+        outside_rect = pygame.Rect(0, kitchen_y, w, h - kitchen_y)
+        if _floor_outside:
+            _tile(self.screen, _floor_outside, outside_rect)
+        else:
+            pygame.draw.rect(self.screen, MAP_BG_COLOR, outside_rect)
 
         # Vertical separator
-        center_x = self.screen.get_width() // 2
+        center_x = w // 2
         pygame.draw.line(self.screen, MAP_SEPARATOR_COLOR,
-                         (center_x, 0), (center_x, self.screen.get_height()),
+                         (center_x, 0), (center_x, h),
                          MAP_SEPARATOR_WIDTH)
 
         # Horizontal separator (kitchen / shop)
-        kitchen_y = int(self.screen.get_height() * MAP_KITCHEN_RATIO)
         pygame.draw.line(self.screen, MAP_SEPARATOR_COLOR,
-                         (0, kitchen_y), (self.screen.get_width(), kitchen_y),
+                         (0, kitchen_y), (w, kitchen_y),
                          MAP_SEPARATOR_WIDTH)
 
         self.zone_left.draw()
