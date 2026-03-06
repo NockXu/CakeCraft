@@ -110,13 +110,6 @@ class Player(Entity):
         self._is_moving = False
 
     def draw(self, screen: pygame.Surface):
-        # Collision zone (debug, semi-transparent)
-        csurf = pygame.Surface((self.collision_w, self.collision_h))
-        csurf.set_alpha(30)
-        csurf.fill((0, 100, 255))
-        screen.blit(csurf, (self.position.x - self.collision_w // 2,
-                             self.position.y - self.collision_h // 2))
-
         _load_sprites()
 
         if _frames:

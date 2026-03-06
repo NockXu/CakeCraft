@@ -32,6 +32,8 @@ class Hoven(Holder):
         self.burned_recently = False
         self.burned_timer    = 0.0
         self._spin_angle     = 0.0
+        self._scaled_sprite: pygame.Surface | None = None
+        self._scaled_size: tuple = (0, 0)
         
         # Créer la bulle de progression pour la cuisson
         bubble_width = collision_size
@@ -88,12 +90,15 @@ class Hoven(Holder):
         rect = self.get_collision_rect()
 
         if _sprite_idle:
-            scaled = pygame.transform.smoothscale(_sprite_idle, (rect.width, rect.height))
+            # Re-scale only when size changes (typically never after first draw)
+            if self._scaled_sprite is None or self._scaled_size != (rect.width, rect.height):
+                self._scaled_sprite = pygame.transform.smoothscale(_sprite_idle, (rect.width, rect.height))
+                self._scaled_size = (rect.width, rect.height)
             if self.is_cooking:
-                scaled = pygame.transform.rotate(scaled, -self._spin_angle)
-                screen.blit(scaled, scaled.get_rect(center=rect.center))
+                rotated = pygame.transform.rotate(self._scaled_sprite, -self._spin_angle)
+                screen.blit(rotated, rotated.get_rect(center=rect.center))
             else:
-                screen.blit(scaled, rect)
+                screen.blit(self._scaled_sprite, rect)
         else:
             color = (180, 80, 20) if self.is_cooking else (140, 100, 60)
             pygame.draw.rect(screen, color, rect, border_radius=6)

@@ -372,10 +372,8 @@ class PlayerZone:
         title_surf = _FONT_TITLE.render(recipe.cake_type.value, True, hdr_txt)
         self.screen.blit(title_surf, title_surf.get_rect(center=hdr_rect.center))
 
-        # Ingredients already deposited in workbench
-        deposited_set = set()
-        if self.workbench:
-            deposited_set = set(self.workbench.get_deposited())
+        # Ingredients already deposited in workbench (count-aware)
+        deposited_remaining = list(self.workbench.get_deposited()) if self.workbench else []
 
         y = box.top + HDR_H + 10
         section_lbl = _FONT_LABEL.render("INGREDIENTS", True, (168, 138, 100))
@@ -386,7 +384,11 @@ class PlayerZone:
         x = box.left + _PAD
         for ingredient in recipe.ingredients:
             bg, fg = _INGREDIENT_PALETTE.get(ingredient, ((210, 210, 210), (50, 50, 50)))
-            done   = ingredient in deposited_set
+            if ingredient in deposited_remaining:
+                done = True
+                deposited_remaining.remove(ingredient)
+            else:
+                done = False
             if not done:
                 bg = tuple(max(0, c - 40) for c in bg)
 
