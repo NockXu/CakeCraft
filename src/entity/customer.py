@@ -2,8 +2,29 @@ from entity.entity import Entity
 from core.position import Position
 from recipe.recipe import Recipe
 from core.enums import CustomerState
-from core.constants import CUSTOMER_SIZE, CUSTOMER_SPEED, CUSTOMER_COLOR, CUSTOMER_ANGRY_COLOR
+from core.constants import CUSTOMER_SIZE, CUSTOMER_SPEED, _asset
 import pygame
+
+_sprite_happy: pygame.Surface | None = None
+_sprite_angry: pygame.Surface | None = None
+_sprites_loaded = False
+
+
+def _load_sprites(size: int):
+    global _sprite_happy, _sprite_angry, _sprites_loaded
+    if _sprites_loaded:
+        return
+    _sprites_loaded = True
+    try:
+        raw = pygame.image.load(_asset('sprites', 'customers', 'customer_happy.png')).convert_alpha()
+        _sprite_happy = pygame.transform.smoothscale(raw, (size * 2, size * 2))
+    except Exception:
+        _sprite_happy = None
+    try:
+        raw = pygame.image.load(_asset('sprites', 'customers', 'customer_angry.png')).convert_alpha()
+        _sprite_angry = pygame.transform.smoothscale(raw, (size * 2, size * 2))
+    except Exception:
+        _sprite_angry = None
 
 
 class Customer(Entity):
@@ -14,9 +35,9 @@ class Customer(Entity):
         self.recipe         = recipe
         self.state          = CustomerState.WALKING
         self.patience       = recipe.time_limit
-        self._failed        = False   # True if they left due to patience running out
-        self._not_cooked_received = False  # True if they received an uncooked cake
-        self._carried_item  = None   # Item that the customer is carrying
+        self._failed        = False
+        self._not_cooked_received = False
+        self._carried_item  = None
 
     # ------------------------------------------------------------------
     # Update
@@ -40,24 +61,19 @@ class Customer(Entity):
 
         elif self.state in (CustomerState.SERVED, CustomerState.LEAVING):
             self._walk_toward(self.leave_position, dt)
-        
-        # Update carried item position to follow customer
+
         if self._carried_item:
             self._carried_item.position = Position(self.position.x, self.position.y)
 
     def serve(self):
-        """Appeler quand le joueur livre la commande avec succès."""
         self.state   = CustomerState.SERVED
         self._failed = False
 
     def receive_not_cooked(self):
-        """Appeler quand le client reçoit un gâteau pas cuit."""
         self._not_cooked_received = True
 
     def receive_item(self, item):
-        """Appeler quand le client reçoit un item (gâteau)."""
         self._carried_item = item
-        # Update item position to follow the customer
         item.position = Position(self.position.x, self.position.y)
 
     @property
@@ -72,24 +88,35 @@ class Customer(Entity):
     def is_done(self) -> bool:
         return self.state in (CustomerState.SERVED, CustomerState.LEAVING) and self._reached(self.leave_position)
 
+    def _is_angry(self) -> bool:
+        if self.state == CustomerState.SERVED:
+            return False
+        if self._failed or self._not_cooked_received:
+            return True
+        if self.state == CustomerState.WAITING and self.patience_ratio <= 0.5:
+            return True
+        return False
+
     # ------------------------------------------------------------------
     # Draw
     # ------------------------------------------------------------------
 
     def draw(self, screen: pygame.Surface):
-        x, y  = int(self.position.x), int(self.position.y)
-        if self.state == CustomerState.LEAVING or self._not_cooked_received:
-            color = CUSTOMER_ANGRY_COLOR
+        _load_sprites(CUSTOMER_SIZE)
+        x, y = int(self.position.x), int(self.position.y)
+
+        sprite = (_sprite_angry if self._is_angry() else _sprite_happy)
+        if sprite:
+            screen.blit(sprite, sprite.get_rect(center=(x, y)))
         else:
-            color = CUSTOMER_COLOR
-        pygame.draw.circle(screen, color, (x, y), CUSTOMER_SIZE)
-        
-        # Draw the carried item (cake) above the customer
+            from core.constants import CUSTOMER_COLOR, CUSTOMER_ANGRY_COLOR
+            color = CUSTOMER_ANGRY_COLOR if self._is_angry() else CUSTOMER_COLOR
+            pygame.draw.circle(screen, color, (x, y), CUSTOMER_SIZE)
+
         if self._carried_item:
             from core.constants import ITEM_SIZE
-            item_x = x
             item_y = y - CUSTOMER_SIZE - ITEM_SIZE // 2 - 5
-            self._carried_item._render(screen, item_x, item_y)
+            self._carried_item._render(screen, x, item_y)
 
     # ------------------------------------------------------------------
     # Helpers

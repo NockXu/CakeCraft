@@ -9,6 +9,18 @@ from entity.item.cake_item import CakeItem
 _REACH = 6  # pixels tolerance to consider "arrived"
 
 
+def _remaining_needed(recipe, workbench) -> list:
+    """Return ingredients still needed, respecting duplicates."""
+    if not recipe:
+        return []
+    deposited = list(workbench.get_deposited()) if workbench else []
+    remaining = list(recipe.ingredients)
+    for ing in deposited:
+        if ing in remaining:
+            remaining.remove(ing)
+    return remaining
+
+
 class BotZone(PlayerZone):
     """PlayerZone where the player is controlled by a simple bot."""
 
@@ -104,9 +116,8 @@ class BotZone(PlayerZone):
 
         # 5. Carrying a wrong/unneeded ingredient — trash it
         if self.player.has_item() and isinstance(self.player.current_item, IngredientItem):
-            deposited = set(self.workbench.get_deposited()) if self.workbench else set()
-            needed    = [i for i in recipe.ingredients if i not in deposited] if recipe else []
-            held      = self.player.current_item.ingredient_type
+            needed = _remaining_needed(recipe, self.workbench)
+            held   = self.player.current_item.ingredient_type
             if held in needed:
                 self._bot_walk_to(self.workbench)
                 if self._bot_in_range(self.workbench):
@@ -121,8 +132,7 @@ class BotZone(PlayerZone):
         # 6. Go pick the next needed ingredient — only if oven is free or empty
         oven_busy = hoven and hoven.held_item is not None
         if recipe and not self.player.has_item() and not (self.workbench and self.workbench._output_item) and not oven_busy:
-            deposited   = set(self.workbench.get_deposited()) if self.workbench else set()
-            needed      = [i for i in recipe.ingredients if i not in deposited]
+            needed = _remaining_needed(recipe, self.workbench)
             if needed:
                 creator = next((c for c in self._creators if c.ingredient_type == needed[0]), None)
                 if creator:
@@ -131,12 +141,12 @@ class BotZone(PlayerZone):
                         self._bot_press_f()
 
     def _bot_walk_to(self, interactable):
-        # Target the bottom edge of the interactable to match the feet hitbox
+        self._bot_target = interactable
         rect = interactable.get_collision_rect()
         tx   = rect.centerx
         ty   = rect.bottom
         px   = self.player.position.x
-        py   = self.player.position.y + self.player.collision_h // 2  # player feet y
+        py   = self.player.position.y + self.player.collision_h // 2
         dx   = tx - px
         dy   = ty - py
         dist = (dx ** 2 + dy ** 2) ** 0.5
@@ -154,9 +164,12 @@ class BotZone(PlayerZone):
 
     def _bot_press_f(self):
         interact_key = PLAYER_2_INTERACT if self.side == Side.RIGHT else PLAYER_1_INTERACT
-        for interactable in self.interactables:
-            if hasattr(interactable, "handle_keydown"):
-                interactable.handle_keydown(interact_key)
+        target = self._bot_target
+        if target and hasattr(target, "handle_keydown") and self._bot_in_range(target):
+            prev = target.in_range
+            target.in_range = True
+            target.handle_keydown(interact_key)
+            target.in_range = prev
         self._bot_cooldown = 0.15
 
     # ── Override — ignore human input, run bot instead ────────────────────────
