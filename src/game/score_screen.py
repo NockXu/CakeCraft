@@ -105,11 +105,11 @@ class ScoreScreen:
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key in (pygame.K_ESCAPE, pygame.K_6):
+                if event.key in (pygame.K_ESCAPE, pygame.K_3):
                     self.result = "quit"; self.running = False
                 elif event.key in (pygame.K_LEFT, pygame.K_RIGHT):
                     self._selected = 1 - self._selected
-                elif event.key in (pygame.K_1, pygame.K_RETURN):
+                elif event.key in (pygame.K_1, pygame.K_4, pygame.K_RETURN):
                     self.result = _ORDER[self._selected]; self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 for name, rect in self.buttons.items():

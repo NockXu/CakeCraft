@@ -22,10 +22,10 @@ def get_button_image(activate_key: int) -> pygame.Surface | None:
     """Return the button image for a given pygame key constant, or None."""
     import pygame as _pg
     _KEY_MAP = {
-        _pg.K_3: 'b_3.png',
+        _pg.K_3: 'b_6.png',
         _pg.K_4: 'b_4.png',
         _pg.K_5: 'b_5.png',
-        _pg.K_6: 'b_6.png',
+        _pg.K_6: 'b_3.png',
         _pg.K_1: 'b_1.png',
         _pg.K_2: 'b_2.png',
         _pg.K_e: 'r_3.png',

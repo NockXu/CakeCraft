@@ -18,8 +18,7 @@ _PS_LABELS = {
 
 _KEY_UP      = pygame.K_UP
 _KEY_DOWN    = pygame.K_DOWN
-_KEY_CONFIRM  = pygame.K_1
-_KEY_CONFIRM2 = pygame.K_RETURN
+_KEY_CONFIRM = (pygame.K_1, pygame.K_4, pygame.K_RETURN)
 
 
 class PlayerSelectScreen:
@@ -75,13 +74,13 @@ class PlayerSelectScreen:
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key in (pygame.K_ESCAPE, pygame.K_6):
+                if event.key in (pygame.K_ESCAPE, pygame.K_3):
                     self.running = False
                 elif event.key == _KEY_UP:
                     self._selected = (self._selected - 1) % len(_PS_ORDER)
                 elif event.key == _KEY_DOWN:
                     self._selected = (self._selected + 1) % len(_PS_ORDER)
-                elif event.key in (_KEY_CONFIRM, _KEY_CONFIRM2):
+                elif event.key in _KEY_CONFIRM:
                     self.result  = _PS_ORDER[self._selected]
                     self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:

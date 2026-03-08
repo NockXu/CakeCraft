@@ -61,9 +61,9 @@ TIME_FAST_FORWARD_SCALE = 10
 
 PLAYER_1_KEYS    = {"up": pygame.K_UP, "down": pygame.K_DOWN, "left": pygame.K_LEFT, "right": pygame.K_RIGHT}
 PLAYER_2_KEYS    = {"up": pygame.K_o, "down": pygame.K_l, "left": pygame.K_k, "right": pygame.K_m}
-PLAYER_1_INTERACT = pygame.K_3
+PLAYER_1_INTERACT = pygame.K_6
 PLAYER_2_INTERACT = pygame.K_e
-PLAYER_1_QUIT    = pygame.K_6
+PLAYER_1_QUIT    = pygame.K_3
 PLAYER_2_QUIT    = pygame.K_d
 
 # CUSTOMER

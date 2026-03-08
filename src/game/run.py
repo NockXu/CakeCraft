@@ -34,7 +34,7 @@ class Game:
                     if event.type == pygame.QUIT:
                         self.running = False
                     elif event.type == pygame.KEYDOWN:
-                        if event.key in (pygame.K_ESCAPE, pygame.K_6):
+                        if event.key in (pygame.K_ESCAPE, pygame.K_3):
                             self.running = False
                         elif not self._spectating:
                             self.eventHandler.handle_keydown(event.key)
@@ -97,14 +97,14 @@ class Game:
         selected = 0
         _NAV_LEFT  = (pygame.K_LEFT,  pygame.K_UP)
         _NAV_RIGHT = (pygame.K_RIGHT, pygame.K_DOWN)
-        _CONFIRM   = (pygame.K_1, pygame.K_RETURN)
+        _CONFIRM   = (pygame.K_1, pygame.K_4, pygame.K_RETURN)
 
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return "quit"
                 elif event.type == pygame.KEYDOWN:
-                    if event.key in (pygame.K_ESCAPE, pygame.K_6):
+                    if event.key in (pygame.K_ESCAPE, pygame.K_3):
                         return "quit"
                     elif event.key in _NAV_LEFT:
                         selected = 0

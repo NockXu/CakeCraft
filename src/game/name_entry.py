@@ -99,7 +99,7 @@ class _PlayerPicker:
                 self.done = True
         elif key == self.key_submit:
             self.done = True
-        elif key in (pygame.K_ESCAPE, pygame.K_6):
+        elif key in (pygame.K_ESCAPE, pygame.K_3):
             self.skipped = True
             self.done    = True
 

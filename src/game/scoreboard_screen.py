@@ -32,7 +32,7 @@ class ScoreboardScreen:
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_6):
+                if event.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_1, pygame.K_4, pygame.K_3):
                     self.running = False
                 elif event.key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_TAB):
                     self.tab = _TAB_VS if self.tab == _TAB_SOLO else _TAB_SOLO

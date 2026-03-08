@@ -14,8 +14,7 @@ _MENU_ORDER = [MenuButton.JOUER, MenuButton.SCORE, MenuButton.QUITTER]
 # J1 arcade controls for menu navigation
 _KEY_UP      = pygame.K_UP
 _KEY_DOWN    = pygame.K_DOWN
-_KEY_CONFIRM = pygame.K_1   # button 1 confirms
-_KEY_CONFIRM2 = pygame.K_RETURN  # also allow Enter
+_KEY_CONFIRM = (pygame.K_1, pygame.K_4, pygame.K_RETURN)
 
 
 class Menu:
@@ -37,13 +36,13 @@ class Menu:
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key in (pygame.K_ESCAPE, pygame.K_6):
+                if event.key in (pygame.K_ESCAPE, pygame.K_3):
                     pygame.quit(); sys.exit()
                 elif event.key == _KEY_UP:
                     self._selected = (self._selected - 1) % len(_MENU_ORDER)
                 elif event.key == _KEY_DOWN:
                     self._selected = (self._selected + 1) % len(_MENU_ORDER)
-                elif event.key in (_KEY_CONFIRM, _KEY_CONFIRM2):
+                elif event.key in _KEY_CONFIRM:
                     self._confirm(_MENU_ORDER[self._selected])
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 for spec, rect in self.buttons.items():
