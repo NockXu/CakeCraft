@@ -93,12 +93,25 @@ class Game:
         btn_quit = pygame.Rect(w // 2 - 200, h // 2 + 20, 160, 50)
         btn_spec = pygame.Rect(w // 2 + 40,  h // 2 + 20, 200, 50)
 
+        # 0 = quit, 1 = spectate
+        selected = 0
+        _NAV_LEFT  = (pygame.K_LEFT,  pygame.K_UP)
+        _NAV_RIGHT = (pygame.K_RIGHT, pygame.K_DOWN)
+        _CONFIRM   = (pygame.K_1, pygame.K_RETURN)
+
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return "quit"
-                elif event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_6):
-                    return "quit"
+                elif event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_ESCAPE, pygame.K_6):
+                        return "quit"
+                    elif event.key in _NAV_LEFT:
+                        selected = 0
+                    elif event.key in _NAV_RIGHT:
+                        selected = 1
+                    elif event.key in _CONFIRM:
+                        return "quit" if selected == 0 else "spectate"
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if btn_quit.collidepoint(event.pos):
                         return "quit"
@@ -113,8 +126,15 @@ class Game:
             msg = font_b.render("Vous avez perdu !", True, (255, 200, 50))
             screen.blit(msg, msg.get_rect(centerx=w // 2, centery=h // 2 - 30))
 
-            pygame.draw.rect(screen, (180, 60, 60),  btn_quit, border_radius=10)
-            pygame.draw.rect(screen, (60, 120, 180), btn_spec, border_radius=10)
+            col_quit = (230, 90, 90)  if selected == 0 else (180, 60, 60)
+            col_spec = (90, 160, 230) if selected == 1 else (60, 120, 180)
+            pygame.draw.rect(screen, col_quit, btn_quit, border_radius=10)
+            pygame.draw.rect(screen, col_spec, btn_spec, border_radius=10)
+            if selected == 0:
+                pygame.draw.rect(screen, (255, 255, 255), btn_quit, 3, border_radius=10)
+            else:
+                pygame.draw.rect(screen, (255, 255, 255), btn_spec, 3, border_radius=10)
+
             screen.blit(font_s.render("Quitter", True, (255,255,255)),
                         font_s.render("Quitter", True, (255,255,255)).get_rect(center=btn_quit.center))
             screen.blit(font_s.render("Regarder la suite", True, (255,255,255)),
