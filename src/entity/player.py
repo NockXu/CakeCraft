@@ -134,15 +134,16 @@ class Player(Entity):
         for interactable in self.available_interactables:
             interactable.in_range = (interactable == interactable_in_range)
 
-    def handle_movement(self, keys):
+    def handle_movement(self, keys, dt: float = 1 / 60):
+        speed = PLAYER_SPEED * dt
         if keys[self.controls["left"]]:
-            self.move(-PLAYER_SPEED, 0)
+            self.move(-speed, 0)
         if keys[self.controls["right"]]:
-            self.move(PLAYER_SPEED, 0)
+            self.move(speed, 0)
         if keys[self.controls["up"]]:
-            self.move(0, -PLAYER_SPEED)
+            self.move(0, -speed)
         if keys[self.controls["down"]]:
-            self.move(0, PLAYER_SPEED)
+            self.move(0, speed)
 
     def get_collision_rect(self):
         # Small hitbox at feet level (bottom of sprite)

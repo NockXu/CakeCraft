@@ -29,7 +29,7 @@ class eventHandler:
             if hasattr(thing, "handle_keydown"):
                 thing.handle_keydown(key)
 
-    def handle_movement(self, keys):
+    def handle_movement(self, keys, dt: float = 1 / 60):
         for thing in self._thingToHandle:
             if hasattr(thing, "handle_movement"):
-                thing.handle_movement(keys)
+                thing.handle_movement(keys, dt)

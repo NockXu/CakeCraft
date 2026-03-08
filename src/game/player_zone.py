@@ -479,8 +479,8 @@ class PlayerZone:
             if hasattr(interactable, "handle_keydown"):
                 interactable.handle_keydown(key)
 
-    def handle_movement(self, keys):
-        self.player.handle_movement(keys)
+    def handle_movement(self, keys, dt: float = 1 / 60):
+        self.player.handle_movement(keys, dt)
 
     def handle_events(self):
         for interactable in self.interactables:

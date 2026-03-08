@@ -44,7 +44,7 @@ MAP_COMPTOIR_COLOR       = (180, 120, 60)
 
 # PLAYER
 PLAYER_SIZE    = 30
-PLAYER_SPEED   = 5
+PLAYER_SPEED   = 300  # px/s (frame-rate independent)
 PLAYER_1_COLOR = (220, 50, 50)
 PLAYER_2_COLOR = (50, 100, 220)
 

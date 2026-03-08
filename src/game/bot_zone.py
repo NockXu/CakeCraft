@@ -52,21 +52,21 @@ class BotZone(PlayerZone):
             # Cake in oven → retrieve it first
             oven_has_cake = hoven and hoven.held_item and isinstance(hoven.held_item, CakeItem)
             if oven_has_cake and not self.player.has_item():
-                self._bot_walk_to(hoven)
+                self._bot_walk_to(hoven, dt)
                 if self._bot_in_range(hoven):
                     self._bot_press_f()
                 return
 
             # Carrying anything → trash it
             if self.player.has_item() and deletor:
-                self._bot_walk_to(deletor)
+                self._bot_walk_to(deletor, dt)
                 if self._bot_in_range(deletor):
                     self._bot_press_f()
                 return
 
             # Ingredients on workbench → pull them out one by one and trash
             if self.workbench and (self.workbench._deposited or self.workbench._output_item) and not self.player.has_item():
-                self._bot_walk_to(self.workbench)
+                self._bot_walk_to(self.workbench, dt)
                 if self._bot_in_range(self.workbench):
                     self._bot_press_f()
                 return
@@ -81,14 +81,14 @@ class BotZone(PlayerZone):
         # 1. Oven has a cooked cake ready — go retrieve it
         #    Also retrieve early if customer is about to leave (< 3s left)
         if oven_has_cake and not self.player.has_item() and (hoven.held_item.cooked >= 1.0 or time_is_urgent):
-            self._bot_walk_to(hoven)
+            self._bot_walk_to(hoven, dt)
             if self._bot_in_range(hoven):
                 self._bot_press_f()
             return
 
         # 2. Carrying a cooked cake — deliver it (don't press F while still in oven range)
         if self.player.has_item() and isinstance(self.player.current_item, CakeItem) and self.player.current_item.cooked >= 1.0:
-            self._bot_walk_to(self.counter)
+            self._bot_walk_to(self.counter, dt)
             if self._bot_in_range(self.counter) and not self._bot_in_range(hoven):
                 self._bot_press_f()
             return
@@ -97,11 +97,11 @@ class BotZone(PlayerZone):
         #    If time is urgent, deliver directly instead of putting in oven
         if self.player.has_item() and isinstance(self.player.current_item, CakeItem) and self.player.current_item.cooked < 1.0:
             if time_is_urgent:
-                self._bot_walk_to(self.counter)
+                self._bot_walk_to(self.counter, dt)
                 if self._bot_in_range(self.counter) and not self._bot_in_range(hoven):
                     self._bot_press_f()
             elif hoven and not hoven.held_item:
-                self._bot_walk_to(hoven)
+                self._bot_walk_to(hoven, dt)
                 if self._bot_in_range(hoven):
                     self._bot_press_f()
             return
@@ -109,7 +109,7 @@ class BotZone(PlayerZone):
         # 4. Workbench assembled an uncooked cake — pick it up (if oven is free)
         if self.workbench and self.workbench._output_item and not self.player.has_item():
             if hoven and not hoven.held_item:
-                self._bot_walk_to(self.workbench)
+                self._bot_walk_to(self.workbench, dt)
                 if self._bot_in_range(self.workbench):
                     self._bot_press_f()
             return
@@ -119,12 +119,12 @@ class BotZone(PlayerZone):
             needed = _remaining_needed(recipe, self.workbench)
             held   = self.player.current_item.ingredient_type
             if held in needed:
-                self._bot_walk_to(self.workbench)
+                self._bot_walk_to(self.workbench, dt)
                 if self._bot_in_range(self.workbench):
                     self._bot_press_f()
             else:
                 if deletor:
-                    self._bot_walk_to(deletor)
+                    self._bot_walk_to(deletor, dt)
                     if self._bot_in_range(deletor):
                         self._bot_press_f()
             return
@@ -136,11 +136,11 @@ class BotZone(PlayerZone):
             if needed:
                 creator = next((c for c in self._creators if c.ingredient_type == needed[0]), None)
                 if creator:
-                    self._bot_walk_to(creator)
+                    self._bot_walk_to(creator, dt)
                     if self._bot_in_range(creator):
                         self._bot_press_f()
 
-    def _bot_walk_to(self, interactable):
+    def _bot_walk_to(self, interactable, dt: float = 1 / 60):
         self._bot_target = interactable
         rect = interactable.get_collision_rect()
         tx   = rect.centerx
@@ -151,10 +151,10 @@ class BotZone(PlayerZone):
         dy   = ty - py
         dist = (dx ** 2 + dy ** 2) ** 0.5
         if dist > _REACH:
-            step = PLAYER_SPEED
+            step = PLAYER_SPEED * dt
             self.player.move(
-                int(dx / dist * step),
-                int(dy / dist * step),
+                dx / dist * step,
+                dy / dist * step,
             )
 
     def _bot_in_range(self, interactable) -> bool:
@@ -174,7 +174,7 @@ class BotZone(PlayerZone):
 
     # ── Override — ignore human input, run bot instead ────────────────────────
 
-    def handle_movement(self, keys):
+    def handle_movement(self, keys, dt: float = 1 / 60):
         pass
 
     def handle_events(self):

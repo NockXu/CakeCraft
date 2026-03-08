@@ -41,7 +41,7 @@ class Game:
 
                 if not self._spectating:
                     keys = pygame.key.get_pressed()
-                    self.eventHandler.handle_movement(keys)
+                    self.eventHandler.handle_movement(keys, dt)
                     self.eventHandler.handle_events()
 
                 self.map.update(dt)
