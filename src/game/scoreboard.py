@@ -1,9 +1,13 @@
 import json
 import os
 
-_DIR        = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-_PATH       = os.path.join(_DIR, "scoreboard.json")
-_ARCADE_PATH = os.path.join(_DIR, "highscore.txt")  # format NOM-SCORE compatible with arcade Java reader
+_DIR = os.path.normpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+)
+_PATH = os.path.join(_DIR, "scoreboard.json")
+_ARCADE_PATH = os.path.join(
+    _DIR, "highscore"
+)  # format NOM-SCORE compatible with arcade Java reader
 
 _TOP = 10
 
@@ -51,11 +55,15 @@ def add_solo(name: str, score: int):
 def add_vs(name1: str, score1: int, name2: str, score2: int):
     """Save a 1v1 entry — kept as chronological history, last 20 games."""
     data = _load()
-    data["vs"].append({
-        "name1": name1, "score1": score1,
-        "name2": name2, "score2": score2,
-        "total": score1 + score2,
-    })
+    data["vs"].append(
+        {
+            "name1": name1,
+            "score1": score1,
+            "name2": name2,
+            "score2": score2,
+            "total": score1 + score2,
+        }
+    )
     data["vs"] = data["vs"][-20:]  # keep only the 20 most recent
     _save(data)
 
